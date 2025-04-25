@@ -11,6 +11,7 @@ add_executable(rendertoy-gl src/main.cc
     src/glfw_platform.cc
     src/rendertoy.cc
     src/mesh.cc
+    src/camera.cc
     src/shader.cc
     src/texture.cc
     src/utils.cc

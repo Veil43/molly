@@ -2,9 +2,9 @@
 
 int main() {
     // Our new abstraction will turn our code into something close to this:
-    GLFWPlatformWindow platform_window = platformCreateWindow();
-    platformRunWindowLoop(platform_window);
-    platformCloseWindow(platform_window);
+    GLFWPlatformWindow platform_window = platformCreateGLFWWindow();
+    platformRunGLFWWindowLoop(platform_window);
+    platformCloseGLFWWindow(platform_window);
 
     return 0;
 }

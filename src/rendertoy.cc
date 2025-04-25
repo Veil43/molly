@@ -8,11 +8,14 @@
 #include <iostream>
 #include <iomanip>
 
+#include "platform_services.h"
+
 #include "shader.h"
 #include "utils.h"
 #include "mesh.h"
 #include "texture.h"
 #include "math.h"
+#include "camera.h"
 
 static f32 vertices[] = {
      0.5f,  0.5f, 0.0f,    1.0f, 1.0f,    1.0f, 0.0f, 0.0f,
@@ -217,9 +220,13 @@ static StaticMesh cube{};
 static glm::vec3 cube_position(0.0f, 0.0f, -4.0f);
 static Shader shader{};
 static Texture texture{};
+static Camera cam{glm::vec3(0.0f, 0.0f, 4.0f)};
+
 void renderToyOnStartupCall(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
+    // -- Platform Configurations --
+    platformDisableMouseCursor();
 
     rdt::printGLInfo();
     cube = StaticMesh((Vertex*)square_vertices, nullptr, 36, 0);
@@ -236,11 +243,9 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     model = glm::translate(model, cube_position);
     // model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0f));
 
-    glm::vec3 cam_position(0.0f, 0.0f, 4.0f);
-    glm::vec3 world_up(0.0f, 1.0f, 0.0f);
-    glm::mat4 view = glm::lookAt(cam_position, cube_position, world_up);
-
-    glm::mat4 projection = glm::perspective(glm::radians(20.0f), aspect_ratio, 0.1f, 100.0f);
+    cam.m_aspect_ratio = aspect_ratio;
+    glm::mat4 view = cam.getViewMatrix();
+    glm::mat4 projection = cam.getProjectionMatrix();
 
     shader.bind();
     shader.setMat4f("model", model);
@@ -249,20 +254,64 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     shader.bind();
 }
 
-void renderToyRenderLoop(f32 delta_time) {
+void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     GL_QUERY_ERROR(glClearColor(0.5, 0.7, 0.9, 1.0f);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
     glm::mat4 model(1.0f);
-    
+
     cube.bind();
     shader.bind();
-    
+    if (input.w_key.is_down) {
+        cam.processMovementInput(rdt::eMovement::kForward, delta_time);
+    }
+    if (input.s_key.is_down) {
+        cam.processMovementInput(rdt::eMovement::kBackward, delta_time);
+    }
+    if (input.a_key.is_down) {
+        cam.processMovementInput(rdt::eMovement::kLeft, delta_time);
+    }
+    if (input.d_key.is_down) {
+        cam.processMovementInput(rdt::eMovement::kRight, delta_time);
+    } 
+
+    cam.processMouseMovementInput(input.mouse_x - input.mouse_prevx, input.mouse_prevy - input.mouse_y, delta_time);
+
+    glm::mat4 view = cam.getViewMatrix();
+    glm::mat4 projection = cam.getProjectionMatrix();
+
     model = glm::translate(model, cube_position);
-    f32 rot_angle = static_cast<f32>(glm::radians(GLFWGetTime())) * 30;
+    f32 rot_angle = static_cast<f32>(glm::radians(platformGetTime())) * 30;
     model = glm::rotate(model, rot_angle, glm::vec3(1.0f));
-    shader.setMat4f("model", model);
+
+    // shader.setMat4f("model", model);
+    shader.setMat4f("view", view);
+    shader.setMat4f("projection", projection);
 
     GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, 36);)
     cube.unbind();
     shader.unbind();
+
+    // Timing Information --------------------------------------------------
+#ifdef RENDERTOY_DEBUG
+    static u32 frame_count = 0;
+    static f64 time_accumilator = 0.0f;
+    static u32 old_fps = 0.0f;
+    u32 fps = old_fps;
+
+    time_accumilator += delta_time;
+    frame_count += 1;
+    if (time_accumilator >= 1.0f) {
+        fps = static_cast<u32>(frame_count / time_accumilator);
+        old_fps = fps;
+        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps);
+        rdt::log(timing);
+        time_accumilator = 0.0f;
+        frame_count = 0;
+    }
+#endif
+}
+
+// Services
+void renderToyMouseScroll(f32 yoffset) {
+    cam.processMouseScrollInput(yoffset);
 }

@@ -10,10 +10,17 @@
             << " in file: " << __FILE__ << " at line: " << __LINE__;                        \
         rdt::log(oss.str());                                                                \
     }
+
+#define RDT_ASSERT(expr) \
+    if (!expr) *((void*)(0))
 #else
 #define GL_QUERY_ERROR(glFunction) \
     glFunction
+#define RDT_ASSERT(expr)
 #endif
+
+
+
 
 #include <string>
 #include <sstream>
@@ -24,6 +31,17 @@ namespace rdt {
         int width;
         int height;
         int channel_count;
+    };
+
+    /* 
+        Should you be in utils.h???
+        If not the where should you be
+    */
+    enum class eMovement {
+        kForward,
+        kBackward,
+        kLeft,
+        kRight
     };
 
     std::string loadTextFile(const char* path);

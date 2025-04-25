@@ -3,7 +3,9 @@
 
 // Here we have the API for communicatin with rendertoy
 #include "types.h"
+#include "platform_services.h"
 
-void renderToyOnStartupCall(f32 aspect_ratio);
-void renderToyRenderLoop(f32 delta_time);
+// Rendertoy services API
+#include "rendertoy_services.h"
+
 #endif // RENDERTOY_H
