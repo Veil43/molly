@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 #include "platform_services.h"
 
@@ -14,8 +15,10 @@
 #include "utils.h"
 #include "mesh.h"
 #include "texture.h"
-#include "math.h"
+#include "rdtmath.h"
 #include "camera.h"
+#include "material.h"
+#include "light.h"
 
 static f32 vertices[] = {
      0.5f,  0.5f, 0.0f,    1.0f, 1.0f,    1.0f, 0.0f, 0.0f,
@@ -219,8 +222,9 @@ static void sampleOpenGLProgram() {
 static StaticMesh cube{};
 static glm::vec3 cube_position(0.0f, 0.0f, -4.0f);
 static Shader shader{};
-static Texture texture{};
-static Camera cam{glm::vec3(0.0f, 0.0f, 4.0f)};
+static Texture container_diffuse_map{};
+static Texture container_specular_map{};
+static Camera cam{};
 
 void renderToyOnStartupCall(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
@@ -230,32 +234,84 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
 
     rdt::printGLInfo();
     cube = StaticMesh((Vertex*)square_vertices, nullptr, 36, 0);
-    shader = Shader("../src/shaders/vsource.vsh", "../src/shaders/fsource.fsh");
-    texture = Texture("../data/container.png");
+    shader = Shader("../src/shaders/vsample.glsl", "../src/shaders/fsample.glsl");
+    container_diffuse_map = Texture("../data/container.png");
+    container_specular_map= Texture("../data/container_specular.png");
 
-    u32 texture_unit = 0;
     shader.bind();
-    shader.setInt("container", texture_unit);
-    texture.bind(texture_unit);
+    shader.setInt("container.diffuse_map", RDT_DIFFUSE_MAP_TEXTURE_UNIT);
+    shader.setInt("container.specular_map", RDT_SPECULAR_MAP_TEXTURE_UNIT);
+    shader.setFloat("container.shininess", 32.0f);
+    container_diffuse_map.bind(RDT_DIFFUSE_MAP_TEXTURE_UNIT);
+    container_specular_map.bind(RDT_SPECULAR_MAP_TEXTURE_UNIT);
     shader.unbind();
 
     glm::mat4 model(1.0f);
     model = glm::translate(model, cube_position);
     // model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0f));
+    
+    Camera tmp(glm::vec3(0.0f, 0.0f, 3.0f));
+    cam = tmp;
 
     cam.m_aspect_ratio = aspect_ratio;
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 projection = cam.getProjectionMatrix();
 
+    PointLight point_light1 = {};
+    point_light1.position = glm::vec3(1.0f);
+    point_light1.attenuation = glm::vec3(1.0f, 0.09f, 0.032f);
+    point_light1.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
+    point_light1.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+    point_light1.specular = glm::vec3(1.0f);
+
+    SpotLight spot_light1 = {};
+    spot_light1.position = cam.m_position;
+
+    spot_light1.direction = -spot_light1.position;
+    spot_light1.attenuation = glm::vec3(1.0f, 0.09f, 0.032f);
+    spot_light1.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
+    spot_light1.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
+    spot_light1.specular = glm::vec3(1.0f);
+    spot_light1.cutoff = glm::cos(glm::radians(12.5f));
+    spot_light1.outer_cutoff = glm::cos(glm::radians(17.5f));
+
     shader.bind();
     shader.setMat4f("model", model);
     shader.setMat4f("view", view);
     shader.setMat4f("projection", projection);
-    shader.bind();
+    shader.setVec3f("point_light1.position", point_light1.position);
+    shader.setVec3f("point_light1.attenuation", point_light1.position);
+    shader.setVec3f("point_light1.ambient", point_light1.ambient);
+    shader.setVec3f("point_light1.diffuse", point_light1.diffuse);
+    shader.setVec3f("point_light1.specular", point_light1.specular);
+
+    shader.setVec3f("spot_light1.position", spot_light1.position);
+    shader.setVec3f("spot_light1.direction", spot_light1.direction);
+    shader.setVec3f("spot_light1.attenuation", spot_light1.attenuation);
+    shader.setVec3f("spot_light1.ambient", spot_light1.ambient);
+    shader.setVec3f("spot_light1.diffuse", spot_light1.diffuse);
+    shader.setVec3f("spot_light1.specular", spot_light1.specular);
+    shader.setFloat("spot_light1.cutoff", spot_light1.cutoff);
+    shader.setFloat("spot_light1.outer_cutoff", spot_light1.outer_cutoff);
+    shader.unbind();
 }
 
+std::vector<glm::vec3> container_positions = 
+{
+    glm::vec3(0.0f, 0.0f, 0.0f),
+    glm::vec3( 2.0f, 5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3( 2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f, 3.0f, -7.5f),
+    glm::vec3( 1.3f, -2.0f, -2.5f),
+    glm::vec3( 1.5f, 2.0f, -2.5f),
+    glm::vec3( 1.5f, 0.2f, -1.5f),
+    glm::vec3(-1.3f, 1.0f, -1.5f)
+};
+
 void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
-    GL_QUERY_ERROR(glClearColor(0.5, 0.7, 0.9, 1.0f);)
+    GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
     glm::mat4 model(1.0f);
 
@@ -287,7 +343,13 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     shader.setMat4f("view", view);
     shader.setMat4f("projection", projection);
 
-    GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, 36);)
+    for (auto& pos : container_positions) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, pos);
+        shader.setMat4f("model", model);
+        cube.draw();
+    }
+
     cube.unbind();
     shader.unbind();
 

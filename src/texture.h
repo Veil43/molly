@@ -17,6 +17,9 @@ public:
 
     ~Texture();
 
+    /*
+        Bind the texture to a texture unit
+    */
     void bind(u32 unit) const noexcept;
     void unbind() const noexcept;
 };

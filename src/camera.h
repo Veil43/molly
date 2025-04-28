@@ -1,7 +1,7 @@
 #ifndef RENDERTOY_CAMRA_H
 #define RENDERTOY_CAMRA_H
 
-#include "math.h"
+#include "rdtmath.h"
 #include "types.h"
 #include "utils.h"
 

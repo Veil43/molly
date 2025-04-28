@@ -8,7 +8,7 @@ processInput(GLFWPlatformWindow w, PlatformInput);
 static void initializePlatformServices(GLFWwindow* window);
 
 GLFW_DECL_KEY_CALLBACK(platformDefaultKeyCallback) {
-    platformGLFWCMDLog("WARNING: Currently using <platformDefaultKeyCallback>. Please provide a key callback.");
+    // platformGLFWCMDLog("WARNING: Currently using <platformDefaultKeyCallback>. Please provide a key callback.");
     
     // ESC
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {

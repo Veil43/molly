@@ -2,7 +2,7 @@
 #define RENDERTOY_SHADER_H
 #include "types.h"
 #include <string>
-#include "math.h"
+#include "rdtmath.h"
 
 #include "texture.h"
 

@@ -30,7 +30,7 @@ Texture::Texture(const char* path) {
     }
 
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, 0);)
-    freeImageData(&image);
+    rdt::freeImageData(&image);
 }
 
 Texture::Texture(Texture&& other) noexcept  {
@@ -53,8 +53,8 @@ Texture::~Texture() {
 }
 
 void Texture::bind(u32 unit) const noexcept {
-    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, this->m_id);)
     GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + unit);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, this->m_id);)
 }
 
 void Texture::unbind() const noexcept {
