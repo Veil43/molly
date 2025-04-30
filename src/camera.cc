@@ -72,19 +72,19 @@ glm::mat4 Camera::getProjectionMatrix() const {
 void Camera::processMovementInput(rdt::eMovement direction, f32 delta_time) {
     switch (direction) {
         case rdt::eMovement::kForward : {
-            this->m_position += this->m_forward * kDefaultMovementSpeed * delta_time;
+            this->m_position += this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
         case rdt::eMovement::kBackward : {
-            this->m_position -= this->m_forward * kDefaultMovementSpeed * delta_time;
+            this->m_position -= this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
         case rdt::eMovement::kLeft : {
-            this->m_position -= this->m_right * kDefaultMovementSpeed * delta_time;
+            this->m_position -= this->m_right * this->m_movement_speed * delta_time;
         } break;
         
         case rdt::eMovement::kRight : {
-            this->m_position += this->m_right * kDefaultMovementSpeed * delta_time;
+            this->m_position += this->m_right * this->m_movement_speed * delta_time;
         } break;
 
         default : {

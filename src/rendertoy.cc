@@ -2,7 +2,6 @@
 
 #include "rendertoy.h"
 #include <glad/glad.h>
-#include <stb_image.h>
 
 #include <string>
 #include <iostream>
@@ -201,8 +200,11 @@ static void sampleOpenGLProgram() {
     // if data do else NO!
     std::string texture_path = "../data/container.png";
     int width, height, channel_count;
-    u8* data = stbi_load(texture_path.c_str(), &width, &height, &channel_count, 0);
-
+    u8* data;
+    data = nullptr;
+#ifdef STBI_INCLUDE_STB_IMAGE_H
+    data = stbi_load(texture_path.c_str(), &width, &height, &channel_count, 0);
+#endif
     if (!data) {
         std::cerr << "ERROR::IO::STB: Could not load file: " << texture_path; 
     } else  {
@@ -220,6 +222,8 @@ static void sampleOpenGLProgram() {
 }
 
 static StaticMesh cube{};
+static std::vector<StaticMesh> backpack{};
+
 static glm::vec3 cube_position(0.0f, 0.0f, -4.0f);
 static Shader shader{};
 static Texture container_diffuse_map{};
@@ -232,9 +236,16 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     // -- Platform Configurations --
     platformDisableMouseCursor();
 
+    rdt::ModelData backpack_data = rdt::loadModel("../data/survival_guitar_backpack/scene.gltf");
+    for (auto& mesh : backpack_data.meshes) {
+        StaticMesh static_mesh{mesh};
+        backpack.push_back(std::move(static_mesh));
+    }
+
     rdt::printGLInfo();
     cube = StaticMesh((Vertex*)square_vertices, nullptr, 36, 0);
-    shader = Shader("../src/shaders/vsample.glsl", "../src/shaders/fsample.glsl");
+    // shader = Shader("../src/shaders/vsample.glsl", "../src/shaders/fsample.glsl");
+    shader = Shader("../src/shaders/vno_mat.glsl", "../src/shaders/fno_mat.glsl");
     container_diffuse_map = Texture("../data/container.png");
     container_specular_map= Texture("../data/container_specular.png");
 
@@ -252,6 +263,8 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     
     Camera tmp(glm::vec3(0.0f, 0.0f, 3.0f));
     cam = tmp;
+    cam.m_far = 1000.0f;
+    cam.m_movement_speed = 100.0f;
 
     cam.m_aspect_ratio = aspect_ratio;
     glm::mat4 view = cam.getViewMatrix();
@@ -265,10 +278,9 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     point_light1.specular = glm::vec3(1.0f);
 
     SpotLight spot_light1 = {};
-    spot_light1.position = cam.m_position;
-
+    spot_light1.position = glm::vec3(0.0f, 0.0f, 0.4f);
     spot_light1.direction = -spot_light1.position;
-    spot_light1.attenuation = glm::vec3(1.0f, 0.09f, 0.032f);
+    spot_light1.attenuation = glm::vec3(1.0f, 0.009f, 0.0075f);
     spot_light1.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
     spot_light1.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
     spot_light1.specular = glm::vec3(1.0f);
@@ -276,6 +288,8 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     spot_light1.outer_cutoff = glm::cos(glm::radians(17.5f));
 
     shader.bind();
+    shader.setVec3f("camera_position", cam.m_position);
+
     shader.setMat4f("model", model);
     shader.setMat4f("view", view);
     shader.setMat4f("projection", projection);
@@ -296,8 +310,7 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     shader.unbind();
 }
 
-std::vector<glm::vec3> container_positions = 
-{
+std::vector<glm::vec3> container_positions = {
     glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3( 2.0f, 5.0f, -15.0f),
     glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -310,13 +323,29 @@ std::vector<glm::vec3> container_positions =
     glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
+void renderBackPack() {
+    glm::mat4 view = cam.getViewMatrix();
+    glm::mat4 projection = cam.getProjectionMatrix();
+    
+    shader.bind();
+    shader.setMat4f("view", view);
+    shader.setMat4f("projection", projection);    
+
+    for (auto& mesh : backpack) {
+        glm::mat4 model = mesh.m_transform;
+        mesh.bind();
+        shader.setMat4f("model", model);
+        mesh.draw();
+        mesh.unbind();
+    }
+    shader.unbind();
+}
+
 void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
     glm::mat4 model(1.0f);
 
-    cube.bind();
-    shader.bind();
     if (input.w_key.is_down) {
         cam.processMovementInput(rdt::eMovement::kForward, delta_time);
     }
@@ -339,7 +368,15 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     f32 rot_angle = static_cast<f32>(glm::radians(platformGetTime())) * 30;
     model = glm::rotate(model, rot_angle, glm::vec3(1.0f));
 
+    renderBackPack();
+#ifdef GIMP
+    cube.bind();
+    shader.bind();
     // shader.setMat4f("model", model);
+    shader.setVec3f("camera_position", cam.m_position);
+    shader.setVec3f("spot_light1.position", cam.m_position);
+    shader.setVec3f("spot_light1.direction", cam.m_lookat);
+
     shader.setMat4f("view", view);
     shader.setMat4f("projection", projection);
 
@@ -352,7 +389,7 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
 
     cube.unbind();
     shader.unbind();
-
+#endif
     // Timing Information --------------------------------------------------
 #ifdef RENDERTOY_DEBUG
     static u32 frame_count = 0;
@@ -365,7 +402,8 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     if (time_accumilator >= 1.0f) {
         fps = static_cast<u32>(frame_count / time_accumilator);
         old_fps = fps;
-        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps);
+        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps) 
+        + " | Primitive Count: " + std::to_string(backpack.size());
         rdt::log(timing);
         time_accumilator = 0.0f;
         frame_count = 0;

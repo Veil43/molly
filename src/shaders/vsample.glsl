@@ -17,8 +17,8 @@ void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
     
     tex_coord = aTexCoord;
-    frag_position = vec3(view * model * vec4(aPos, 1.0));
+    frag_position = vec3(model * vec4(aPos, 1.0));
     // Normal needs to be in view space so we don't need to pass the camera position
     // We should receive a normaMatrix as Uniform;
-    normal = normalize(mat3(transpose(inverse(view))) * mat3(transpose(inverse(model))) * aNormal);
+    normal = normalize(mat3(transpose(inverse(model))) * aNormal);
 }

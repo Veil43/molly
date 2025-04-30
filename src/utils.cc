@@ -1,8 +1,17 @@
-#include "utils.h"
 #define RENDERTOY_HAS_GL
-#include <glad/glad.h>
+#include "utils.h"
+
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
+#include <stb_image_write.h>
+#undef STB_IMAGE_IMPLEMENTATION
+#undef STB_IMAGE_WRITE_IMPLEMENTATION
+
+#define TINYGLTF_IMPLEMENTATION
+#include <tiny_gltf.h>
+
+#include <glad/glad.h>
 
 #include <sstream>
 #include <fstream>
@@ -87,4 +96,230 @@ void rdt::freeImageData(ImageData* img) {
     img->width = 0;
     img->height = 0;
     img->channel_count = 0;
+}
+
+struct NodeTransformPair {
+    tinygltf::Node node;
+    glm::mat4 transform;
+};
+
+std::vector<NodeTransformPair> GLTFparseNodeTree(int head_id, const tinygltf::Model& model, const glm::mat4& parent_transform = glm::mat4(1.0f)) {
+    using namespace tinygltf;
+    
+    Node curr_node = model.nodes[head_id];
+    
+    glm::mat4 local_transform = glm::mat4(1.0f);
+    if (curr_node.matrix.size() == 16) {
+        local_transform = glm::make_mat4(curr_node.matrix.data());
+    } else {
+        if (!curr_node.translation.empty()) {
+            local_transform = glm::translate(local_transform, glm::vec3(
+                curr_node.translation[0],
+                curr_node.translation[1],
+                curr_node.translation[2]
+            ));
+        }
+
+        if (!curr_node.rotation.empty()) {
+            glm::quat q(
+                curr_node.rotation[0],
+                curr_node.rotation[1],
+                curr_node.rotation[2],
+                curr_node.rotation[3]
+            );
+            local_transform *= glm::mat4_cast(q);
+        }
+
+        if (!curr_node.scale.empty()) {
+            local_transform = glm::scale(local_transform, glm::vec3(
+                curr_node.scale[0],
+                curr_node.scale[1],
+                curr_node.scale[2]
+            ));
+        }
+    }
+
+    glm::mat4 world_transform = parent_transform * local_transform;
+    std::vector<NodeTransformPair> result;
+    result.push_back({curr_node, world_transform});
+
+    for (int child_id : curr_node.children) {
+        auto children = GLTFparseNodeTree(child_id, model, world_transform);
+        result.insert(result.end(), children.begin(), children.end());
+    }
+
+    return result;
+}
+
+struct GLTFDataCountPair {
+    size_t count = 0;
+    unsigned char* data;
+};
+
+GLTFDataCountPair GLTFGetAccessorData(tinygltf::Model* model, int accessor_index) {
+    using namespace tinygltf;
+    Accessor& accessor = model->accessors[accessor_index];
+    BufferView& buffer_view = model->bufferViews[accessor.bufferView];
+    Buffer& buffer = model->buffers[buffer_view.buffer];
+    unsigned char* data = (&buffer.data[buffer_view.byteOffset + accessor.byteOffset]);
+
+    return { accessor.count, data };
+}
+
+GLTFDataCountPair GLTFGetAttributeData(tinygltf::Primitive* primitive, tinygltf::Model* model, std::string attribute) {
+    using namespace tinygltf;
+
+    int accessor_index = primitive->attributes[attribute];
+
+    return GLTFGetAccessorData(model, accessor_index);
+}
+
+rdt::ModelData rdt::loadModel(const char* path) {
+    using namespace tinygltf;
+
+    Model model;
+    TinyGLTF loader;
+    std::string err;
+    std::string warn;
+
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
+
+    if (!warn.empty()) {
+        rdt::log("WARNING: " + warn);
+    }
+
+    if (!err.empty()) {
+        rdt::log("ERROR: " + err);
+    }
+    
+    if (!ret) {
+        std::string msg = "ERROR: Failed to load a 3D model from file: ";
+        rdt::log(msg + path);
+        return {};
+    }
+
+    ModelData final_model = {};
+    // Transform the tinygltf model into one of our own
+    
+    Scene main_scene;
+    if (model.defaultScene >= 0 && model.defaultScene < model.scenes.size()) {
+        main_scene = model.scenes[model.defaultScene];
+    } else {
+        main_scene = model.scenes[0];
+    }
+
+    for (auto& node_id : main_scene.nodes) {            // parse top level nodes
+        std::vector<NodeTransformPair> node_transform_pairs = GLTFparseNodeTree(node_id, model);
+
+        for (auto& curr_node_pair : node_transform_pairs) {                                 // for each node in top level tree
+            Node curr_node = curr_node_pair.node;
+
+            if (curr_node.mesh < 0 || curr_node.mesh > model.meshes.size()) {
+                continue;
+            } 
+
+            glm::mat4 node_transform = curr_node_pair.transform;
+
+            Mesh node_mesh = model.meshes[curr_node.mesh];              // grab mesh data from each mesh
+            for (auto& primitive : node_mesh.primitives) {              // for each primitive in the mesh
+                MeshData mesh_data = {};
+                mesh_data.world_transform = node_transform;
+
+                GLTFDataCountPair positions_info = GLTFGetAttributeData(&primitive, &model, "POSITION");
+                GLTFDataCountPair normals_info = GLTFGetAttributeData(&primitive, &model, "NORMAL");
+                GLTFDataCountPair tex_coord_info = GLTFGetAttributeData(&primitive, &model, "TEXCOORD_0");
+
+                const unsigned int c_vertex_f32_count = 8;
+                // Check for degenerate model
+                if (positions_info.count != normals_info.count ||
+                    normals_info.count != tex_coord_info.count) 
+                {
+                    log("ERROR: Could not load model: Mismatched Vertex Attribute Count");
+                    mesh_data.vertex_count = 0;
+                    mesh_data.vertex_data = nullptr;
+                } else {
+                    mesh_data.vertex_count = positions_info.count;
+                    mesh_data.vertex_data = new float[mesh_data.vertex_count * c_vertex_f32_count];
+                    for (int i = 0; i < mesh_data.vertex_count; i++) {
+                        float* dst = mesh_data.vertex_data + i * c_vertex_f32_count;
+
+                        const float* position = reinterpret_cast<float*>(positions_info.data) + i * 3;
+                        const float* normal = reinterpret_cast<float*>(normals_info.data) + i * 3;
+                        const float* tex_coord = reinterpret_cast<float*>(tex_coord_info.data) + i * 2;
+
+                        std::memcpy(dst,        position, sizeof(float) * 3);
+                        std::memcpy(dst + 3,    normal, sizeof(float) * 3);
+                        std::memcpy(dst + 6,    tex_coord, sizeof(float) * 2);
+                    }
+                }
+
+                // get indices (Check accessor component type)
+                if (primitive.indices >= 0) {
+                    const Accessor& accessor = model.accessors[primitive.indices];
+                    GLTFDataCountPair indices_info = GLTFGetAccessorData(&model, primitive.indices);
+                    mesh_data.index_data = new unsigned int[indices_info.count];
+                    mesh_data.index_count = indices_info.count;
+
+                    switch (accessor.componentType) {
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+                            const unsigned int* src = reinterpret_cast<const unsigned int*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = src[i];
+                            }
+                        } break;
+
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+                            const unsigned char* src = reinterpret_cast<const unsigned char*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = static_cast<unsigned int>(src[i]);
+                            }
+                        } break;
+
+                        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                            const unsigned short* src = reinterpret_cast<const unsigned short*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = static_cast<unsigned int>(src[i]);
+                            }
+                        } break;
+
+                        case TINYGLTF_COMPONENT_TYPE_INT: {
+                            const int* src = reinterpret_cast<const int*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = static_cast<unsigned int>(src[i]);
+                            }
+                        } break;
+
+                        case TINYGLTF_COMPONENT_TYPE_BYTE: {
+                            const char* src = reinterpret_cast<const char*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = static_cast<unsigned int>(src[i]);
+                            }
+                        } break;
+
+                        case TINYGLTF_COMPONENT_TYPE_SHORT: {
+                            const short* src = reinterpret_cast<const short*>(indices_info.data);
+                            for (int i = 0; i < indices_info.count; i++) {
+                                mesh_data.index_data[i] = static_cast<unsigned int>(src[i]);
+                            }
+                        } break;
+
+                        default : {
+                            mesh_data.index_data = nullptr;
+                            mesh_data.index_count = 0;
+                            log("ERROR: Some joker thought it would be funny to use floats for indices. No element buffer for you!");
+                        }
+                    }
+
+                } else {
+                    mesh_data.index_data = nullptr;
+                    mesh_data.index_count = 0;
+                }
+                // TODO: Get material information
+
+                final_model.meshes.push_back(mesh_data);
+            }
+        }
+    }
+
+    return final_model;
 }

@@ -37,6 +37,8 @@ public:
     f32 m_pitch;
     f32 m_yaw;
 
+    f32 m_movement_speed = kDefaultMovementSpeed;
+
     Camera(
         const glm::vec3& position   = kDefaultPosition, 
         const glm::vec3& world_up   = kDefaultWorldUp, 

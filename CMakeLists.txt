@@ -24,7 +24,12 @@ endif()
 
 # Add glad headers
 target_include_directories(rendertoy-gl PRIVATE third-party/glad/include)
-target_include_directories(rendertoy-gl PRIVATE third-party/)
+
+# Add stb headers
+target_include_directories(rendertoy-gl PRIVATE third-party/stb)
+
+# Add tiny_gltf headers
+target_include_directories(rendertoy-gl PRIVATE third-party/tiny_gltf)
 
 # Add the OpenGL dlls
 find_package(OpenGL REQUIRED)

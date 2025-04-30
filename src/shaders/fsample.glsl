@@ -38,6 +38,7 @@ in vec3 frag_position;
 uniform Material container;
 uniform PointLight point_light1;
 uniform SpotLight spot_light1;
+uniform vec3 camera_position;
 
 void main() {
     vec3 ambient_light_color = point_light1.ambient;
@@ -48,10 +49,10 @@ void main() {
 
     // Specular color calculations assumes camera is at 0,0,0
     vec3 reflected = reflect(-light_direction, normal);
-    vec3 view_direction = normalize(-frag_position);
+    vec3 view_direction = normalize(camera_position-frag_position);
     vec3 specular_light_color = pow(max(dot(reflected, view_direction), 0.0),
                                    container.shininess)
-                               * point_light1.specular;
+                                * point_light1.specular;
 
     vec3 ambient = ambient_light_color * vec3(texture(container.diffuse_map, tex_coord));
     vec3 diffuse = diffuse_light_color * vec3(texture(container.diffuse_map, tex_coord));
@@ -77,7 +78,7 @@ vec3 computeSpotLightColor() {
     vec3 diffuse_color = max(dot(light_direction, normal), 0.0) * spot_light1.diffuse;
 
     vec3 reflected = reflect(-light_direction, normal);
-    vec3 view_direction = normalize(-frag_position);
+    vec3 view_direction = normalize(camera_position - frag_position);
     vec3 specular_color = pow(max(dot(reflected, view_direction), 0.0),
                                     container.shininess)
                           * spot_light1.specular;
@@ -87,8 +88,9 @@ vec3 computeSpotLightColor() {
 
     float distance = length(spot_light1.position - frag_position);
     float attenuation = 1.0 / (spot_light1.attenuation.x + spot_light1.attenuation.y * distance + spot_light1.attenuation.z * (distance *distance));
+    // float attenuation = 1.0 / (distance * distance); // for realistic falloff
 
-    vec3 result = ambient + (intensity * (diffuse + specular));
+    vec3 result = ambient + (intensity * attenuation * (diffuse + specular));
 
     return result;
 }

@@ -19,18 +19,36 @@
 #define RDT_ASSERT(expr)
 #endif
 
-
-
-
 #include <string>
 #include <sstream>
+#include <vector>
+
 #include "glfw_utils.h"
+#include "rdtmath.h"
+
 namespace rdt {
     struct ImageData {
         unsigned char* data;
         int width;
         int height;
         int channel_count;
+    };
+
+    struct MeshData {
+        glm::mat4 world_transform;
+        float* positions;
+        float* normals;
+        float* tex_coord;
+        float* vertex_data;
+        unsigned int* index_data;
+        int vertex_count;
+        int index_count;
+        // unsigned int draw_mode;
+        // unsigned int material;
+    };
+
+    struct ModelData {
+        std::vector<MeshData> meshes;
     };
 
     /* 
@@ -49,7 +67,10 @@ namespace rdt {
     void printGLInfo();
     ImageData loadImageFile(const char* path);
     void freeImageData(ImageData*);
+    ModelData loadModel(const char* path);
+    void freeModel(ModelData*);
+    float* concatModelArrays(const MeshData& data);
 
-} // namespace
+} // namespace rdt
 
 #endif //RENDERTOY_UTIL_H
