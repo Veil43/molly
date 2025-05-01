@@ -229,6 +229,103 @@ static Shader shader{};
 static Texture container_diffuse_map{};
 static Texture container_specular_map{};
 static Camera cam{};
+static u32* texture_handles;
+static std::vector<rdt::MaterialData> s_materials;
+
+u32 convertTextureConfigOption(u32 option) {
+    switch (static_cast<rdt::eTextureConfigOptions>(option)) {
+        case rdt::eTextureConfigOptions::kTextureFilterNearest: {
+            return GL_NEAREST;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureFilterLinear: {
+            return GL_LINEAR;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureFilterNearestMipmapNearest: {
+            return GL_NEAREST_MIPMAP_NEAREST;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureFilterLinearMipmapNearest: {
+            return GL_LINEAR_MIPMAP_NEAREST;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureFilterNearestMipmapLinear: {
+            return GL_NEAREST_MIPMAP_LINEAR;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureFilterLinearMipmapLinear: {
+            return GL_LINEAR_MIPMAP_LINEAR;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureWrapRepeat: {
+            return GL_REPEAT;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureWrapClampToEdge: {
+            return GL_CLAMP_TO_EDGE;
+        } break;
+        case rdt::eTextureConfigOptions::kTextureWrapMirroredRepeat: {
+            return GL_MIRRORED_REPEAT;
+        } break;
+        case rdt::eTextureConfigOptions::kError: {
+            rdt::log("ERROR::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
+            return 0;
+        } break;
+
+        default: {
+            rdt::log("ERROR???::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
+            return 0;
+        }
+    }
+}
+
+void configureTexture(const rdt::TextureConfig& config) {
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convertTextureConfigOption(config.min_filter));)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convertTextureConfigOption(config.mag_filter));)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, convertTextureConfigOption(config.wrap_s));)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, convertTextureConfigOption(config.wrap_t));)
+}
+
+// to be called at runtime (I think)
+void setMaterial(const Shader& shader, const rdt::MaterialData& mat) {
+    // struct MaterialData {
+    //     TextureInfo base_color;
+    //     TextureInfo metallic_roughness;
+    //     TextureInfo normal;
+    //     // Currently not supported
+    //     TextureInfo emissive; 
+    //     // Currently not supported
+    //     TextureInfo occlusion;
+    //     glm::vec4 base_color_factor;
+    //     float metallic_factor;
+    //     float roughness_factor;
+    // };
+    // #define RDT_DIFFUSE_MAP_TEXTURE_UNIT            (0)
+    // #define RDT_SPECULAR_MAP_TEXTURE_UNIT           (1)
+    // #define RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT (2)
+    // #define RDT_NORMAL_MAP_TEXTURE_UNIT             (3)
+
+    // shader.bind();
+    // -------------- vecn + scalar values -----------------
+    shader.setVec4f("pbr_material.diffuse_color_factor", mat.base_color_factor);
+    shader.setFloat("pbr_material.metallic_factor", mat.metallic_factor);
+    shader.setFloat("pbr_material.roughness_factor", mat.roughness_factor);
+    // --------------- sampler2D values -----------------
+    // --------------------- DIFFUSE ----------------------
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_DIFFUSE_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.base_color.image_index]);)
+    configureTexture(mat.base_color.filter_wrap_config);
+    shader.setInt("pbr_material.diffuse_map", RDT_DIFFUSE_MAP_TEXTURE_UNIT);
+
+    // ----------------- METALLIC-ROUGHNESS ------------------
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.metallic_roughness.image_index]);)
+    configureTexture(mat.metallic_roughness.filter_wrap_config);
+    shader.setInt("pbr_material.metallic_roughness_map", RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);
+    
+    // ------------------ NORMAL ----------------------------
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_NORMAL_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.normal.image_index]);)
+    configureTexture(mat.normal.filter_wrap_config);
+    shader.setInt("pbr_material.normal_map", RDT_NORMAL_MAP_TEXTURE_UNIT);
+    // shader.setInt("pbr_material.emissive_map", mat.normal.image_index);
+    // shader.setInt("pbr_material.occlusion_map", mat.normal.image_index);
+    // shader.unbind();
+}
 
 void renderToyOnStartupCall(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
@@ -236,9 +333,31 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     // -- Platform Configurations --
     platformDisableMouseCursor();
 
-    rdt::ModelData backpack_data = rdt::loadModel("../data/survival_guitar_backpack/scene.gltf");
-    for (auto& mesh : backpack_data.meshes) {
+    // TODO: Have an asset manager
+
+    rdt::ModelData backpack_model = rdt::loadModel("../data/survival_guitar_backpack/scene.gltf");
+    texture_handles = new u32[backpack_model.images.size()];
+    glGenTextures(backpack_model.images.size(), texture_handles);
+    s_materials = backpack_model.materials;
+
+    // Load texture images to GPU and store handles sequentially
+    for (size_t i = 0; i < backpack_model.images.size(); i++) {
+        glBindTexture(GL_TEXTURE_2D, texture_handles[i]);
+
+        // TODO: Verify correctness
+        u32 format = GL_RGB + (backpack_model.images[i].channel_count % 3);
+        u32 internal_format = GL_RGB8;
+        if (backpack_model.images[i].channel_size == 16) {
+            internal_format = GL_RGB16;
+        }
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, backpack_model.images[i].width, backpack_model.images[i].height, 0, format, GL_UNSIGNED_BYTE, backpack_model.images[i].data);
+        GL_QUERY_ERROR(glGenerateMipmap(GL_TEXTURE_2D);)
+    }
+
+    for (auto& mesh : backpack_model.meshes) {
         StaticMesh static_mesh{mesh};
+        // Where is this meshe's material?
+        const rdt::MaterialData& mesh_mat = backpack_model.materials[mesh.material_index]; 
         backpack.push_back(std::move(static_mesh));
     }
 
@@ -261,12 +380,13 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     model = glm::translate(model, cube_position);
     // model = glm::rotate(model, glm::radians(45.0f), glm::vec3(1.0f));
     
-    Camera tmp(glm::vec3(0.0f, 0.0f, 3.0f));
+    Camera tmp(glm::vec3(0.0f, 0.0f, 500.0f));
     cam = tmp;
-    cam.m_far = 1000.0f;
+    cam.m_far = 5000.0f;
     cam.m_movement_speed = 100.0f;
 
     cam.m_aspect_ratio = aspect_ratio;
+#ifdef GIMP
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 projection = cam.getProjectionMatrix();
 
@@ -308,6 +428,7 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     shader.setFloat("spot_light1.cutoff", spot_light1.cutoff);
     shader.setFloat("spot_light1.outer_cutoff", spot_light1.outer_cutoff);
     shader.unbind();
+#endif
 }
 
 std::vector<glm::vec3> container_positions = {
@@ -333,6 +454,9 @@ void renderBackPack() {
 
     for (auto& mesh : backpack) {
         glm::mat4 model = mesh.m_transform;
+        const rdt::MaterialData& mesh_mat = s_materials[mesh.m_material_index]; 
+        
+        setMaterial(shader, mesh_mat);
         mesh.bind();
         shader.setMat4f("model", model);
         mesh.draw();

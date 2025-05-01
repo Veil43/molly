@@ -103,6 +103,11 @@ void Shader::setVec3f(const std::string& name, const glm::vec3 value) const  {
     GL_QUERY_ERROR(glUniform3fv(location, 1, glm::value_ptr(value));)
 }
 
+void Shader::setVec4f(const std::string& name, const glm::vec4 value) const  {
+    GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
+    GL_QUERY_ERROR(glUniform3fv(location, 1, glm::value_ptr(value));)
+}
+
 
 void Shader::bind() const {
     GL_QUERY_ERROR(glUseProgram(m_id);)

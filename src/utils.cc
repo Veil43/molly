@@ -98,6 +98,8 @@ void rdt::freeImageData(ImageData* img) {
     img->channel_count = 0;
 }
 
+// GLTF helper functions ---------------------------------------------------
+namespace gltf =  tinygltf;
 struct NodeTransformPair {
     tinygltf::Node node;
     glm::mat4 transform;
@@ -174,11 +176,112 @@ GLTFDataCountPair GLTFGetAttributeData(tinygltf::Primitive* primitive, tinygltf:
     return GLTFGetAccessorData(model, accessor_index);
 }
 
-rdt::ModelData rdt::loadModel(const char* path) {
-    using namespace tinygltf;
+rdt::eTextureConfigOptions GLTFToRDTConfigConvert(unsigned int gltf_macro) {
+    switch (gltf_macro) {
+        case TINYGLTF_TEXTURE_FILTER_NEAREST: {
+            return rdt::eTextureConfigOptions::kTextureFilterNearest;
+        } break;
 
-    Model model;
-    TinyGLTF loader;
+        case TINYGLTF_TEXTURE_FILTER_LINEAR: {
+            return rdt::eTextureConfigOptions::kTextureFilterLinear;
+        } break;
+
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST: {
+            return rdt::eTextureConfigOptions::kTextureFilterNearestMipmapNearest;
+        } break;
+
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST: {
+            return rdt::eTextureConfigOptions::kTextureFilterLinearMipmapNearest;
+        } break;
+
+        case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR: {
+            return rdt::eTextureConfigOptions::kTextureFilterNearestMipmapLinear;
+        } break;
+
+        case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR: {
+            return rdt::eTextureConfigOptions::kTextureFilterLinearMipmapLinear;
+        } break;
+
+        case TINYGLTF_TEXTURE_WRAP_REPEAT: {
+            return rdt::eTextureConfigOptions::kTextureWrapRepeat;
+        } break;
+        case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE: {
+            return rdt::eTextureConfigOptions::kTextureWrapClampToEdge;
+        } break;
+        case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT: {
+            return rdt::eTextureConfigOptions::kTextureWrapMirroredRepeat;
+        } break;
+
+        default: {
+            return rdt::eTextureConfigOptions::kError;
+        }
+    }
+}
+
+rdt::TextureInfo GLTFGetTextureData(gltf::Texture* texture, gltf::Model* model) {
+    rdt::TextureInfo result = {};
+    // check for negatives -1
+    if (texture->sampler >= 0) {
+        const gltf::Sampler& sampler = model->samplers[texture->sampler];
+        result.filter_wrap_config.min_filter = GLTFToRDTConfigConvert(sampler.minFilter);
+        result.filter_wrap_config.mag_filter = GLTFToRDTConfigConvert(sampler.magFilter);
+        result.filter_wrap_config.wrap_s = GLTFToRDTConfigConvert(sampler.wrapS);
+        result.filter_wrap_config.wrap_t = GLTFToRDTConfigConvert(sampler.wrapT);
+    }
+
+    if (texture->source >= 0) {
+        const gltf::Image& image = model->images[texture->source];
+        result.image_index = texture->source;
+        result.image_uri = image.uri;
+    }
+
+    return result;
+}
+
+rdt::MaterialData GLTFGetPrimitiveMaterial(gltf::Primitive* primitive, gltf::Model* model) {
+    rdt::MaterialData result = {};
+    if (primitive->material < 0)  {
+        return result;
+    }
+    // TODO: Get the material names
+    const gltf::Material& primitive_material = model->materials[primitive->material];
+    const gltf::PbrMetallicRoughness& pbr_component = primitive_material.pbrMetallicRoughness;
+    const gltf::TextureInfo& base_color_info = pbr_component.baseColorTexture;
+    const gltf::TextureInfo& metallic_roughness_info = pbr_component.metallicRoughnessTexture;
+    const gltf::NormalTextureInfo& normal_info = primitive_material.normalTexture;
+    const gltf::TextureInfo& emissive_texture = primitive_material.emissiveTexture;
+    const gltf::OcclusionTextureInfo& occlusion_texture = primitive_material.occlusionTexture;
+    
+    result.base_color_factor = glm::vec4(
+        pbr_component.baseColorFactor[0],
+        pbr_component.baseColorFactor[1],
+        pbr_component.baseColorFactor[2],
+        pbr_component.baseColorFactor[3]
+    );
+    result.metallic_factor = static_cast<float>(pbr_component.metallicFactor);
+    result.roughness_factor = static_cast<float>(pbr_component.roughnessFactor);
+    
+
+    if (base_color_info.index >= 0) {
+        result.base_color = GLTFGetTextureData(&model->textures[base_color_info.index], model);
+    }
+
+    if (metallic_roughness_info.index >= 0) {
+        result.metallic_roughness = GLTFGetTextureData(&model->textures[metallic_roughness_info.index], model);
+    }
+
+    if (normal_info.index >= 0) {
+        result.normal = GLTFGetTextureData(&model->textures[normal_info.index], model);
+    }
+
+    // TODO: Add occlusion textures and emissive
+
+    return result;
+}
+
+rdt::ModelData rdt::loadModel(const char* path) {
+    gltf::Model model;
+    gltf::TinyGLTF loader;
     std::string err;
     std::string warn;
 
@@ -200,19 +303,36 @@ rdt::ModelData rdt::loadModel(const char* path) {
 
     ModelData final_model = {};
     // Transform the tinygltf model into one of our own
-    
-    Scene main_scene;
+    // First grab all the image data
+    for (gltf::Image& image : model.images) {
+        ImageData image_data = {};
+        image_data.data = new unsigned char[image.image.size()];
+        image_data.channel_count = image.component;
+        image_data.channel_size = image.bits;
+        image_data.width = image.width;
+        image_data.height = image.height;
+        std::memcpy(image_data.data, image.image.data(), image.image.size());
+        final_model.images.push_back(image_data);
+    }
+
+    gltf::Scene main_scene;
     if (model.defaultScene >= 0 && model.defaultScene < model.scenes.size()) {
         main_scene = model.scenes[model.defaultScene];
     } else {
         main_scene = model.scenes[0];
     }
 
-    for (auto& node_id : main_scene.nodes) {            // parse top level nodes
+    // TODO: Have a meshes array that stores all the UNIQUE meshes.
+    // Currently we are treating each primitive as a standalone mesh, however it is possible that 
+    // two distinct primitives reference the same accessors for position/normal/texcoord and therefore 
+    // have the same geometry. In such a case we would want to have only one copy in an array and reference it with an index.
+    // BASICALLY: do what we've done for images.
+
+    for (auto& node_id : main_scene.nodes) {                            // parse top level nodes
         std::vector<NodeTransformPair> node_transform_pairs = GLTFparseNodeTree(node_id, model);
 
-        for (auto& curr_node_pair : node_transform_pairs) {                                 // for each node in top level tree
-            Node curr_node = curr_node_pair.node;
+        for (auto& curr_node_pair : node_transform_pairs) {             // for each node in top level tree
+            gltf::Node curr_node = curr_node_pair.node;
 
             if (curr_node.mesh < 0 || curr_node.mesh > model.meshes.size()) {
                 continue;
@@ -220,19 +340,22 @@ rdt::ModelData rdt::loadModel(const char* path) {
 
             glm::mat4 node_transform = curr_node_pair.transform;
 
-            Mesh node_mesh = model.meshes[curr_node.mesh];              // grab mesh data from each mesh
+            gltf::Mesh node_mesh = model.meshes[curr_node.mesh];              // grab mesh data from each mesh
             for (auto& primitive : node_mesh.primitives) {              // for each primitive in the mesh
-                MeshData mesh_data = {};
+                rdt::MeshData mesh_data = {};
+                rdt::MaterialData material_data = GLTFGetPrimitiveMaterial(&primitive, &model);
+                
                 mesh_data.world_transform = node_transform;
 
                 GLTFDataCountPair positions_info = GLTFGetAttributeData(&primitive, &model, "POSITION");
                 GLTFDataCountPair normals_info = GLTFGetAttributeData(&primitive, &model, "NORMAL");
                 GLTFDataCountPair tex_coord_info = GLTFGetAttributeData(&primitive, &model, "TEXCOORD_0");
-
+                // Get the primitive's material
+            
                 const unsigned int c_vertex_f32_count = 8;
-                // Check for degenerate model
+                // Check for degenerate mesh
                 if (positions_info.count != normals_info.count ||
-                    normals_info.count != tex_coord_info.count) 
+                    normals_info.count != tex_coord_info.count)
                 {
                     log("ERROR: Could not load model: Mismatched Vertex Attribute Count");
                     mesh_data.vertex_count = 0;
@@ -255,7 +378,7 @@ rdt::ModelData rdt::loadModel(const char* path) {
 
                 // get indices (Check accessor component type)
                 if (primitive.indices >= 0) {
-                    const Accessor& accessor = model.accessors[primitive.indices];
+                    const gltf::Accessor& accessor = model.accessors[primitive.indices];
                     GLTFDataCountPair indices_info = GLTFGetAccessorData(&model, primitive.indices);
                     mesh_data.index_data = new unsigned int[indices_info.count];
                     mesh_data.index_count = indices_info.count;
@@ -314,8 +437,9 @@ rdt::ModelData rdt::loadModel(const char* path) {
                     mesh_data.index_data = nullptr;
                     mesh_data.index_count = 0;
                 }
-                // TODO: Get material information
 
+                final_model.materials.push_back(material_data);
+                mesh_data.material_index = final_model.materials.size() - 1;
                 final_model.meshes.push_back(mesh_data);
             }
         }

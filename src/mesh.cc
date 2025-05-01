@@ -16,7 +16,7 @@ StaticMesh::StaticMesh(Vertex* vertex_data, u32* index_data, i32 vcount, i32 ico
 }
 
 StaticMesh::StaticMesh(const rdt::MeshData& data) 
-    : m_vertex_count{data.vertex_count}, m_index_count{data.index_count}, m_transform{data.world_transform}
+    : m_vertex_count{data.vertex_count}, m_index_count{data.index_count}, m_transform{data.world_transform}, m_material_index{data.material_index}
 {
     Vertex* vertex_data = (Vertex*)data.vertex_data;
     u32* index_data = data.index_data;

@@ -18,6 +18,8 @@ public:
     i32 m_vertex_count;
     i32 m_index_count;
 
+    // temp
+    u32 m_material_index = 0;
     StaticMesh(const StaticMesh& other) =delete;
     StaticMesh& operator=(const StaticMesh& other) =delete;
 

@@ -11,6 +11,7 @@ public:
 
     Texture() noexcept;
     Texture(const char* path);
+    // Texture(const rdt::ImageData& image);
 
     Texture(Texture&&) noexcept;
     Texture& operator=(Texture&&) noexcept;
