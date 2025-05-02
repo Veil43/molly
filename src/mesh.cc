@@ -1,8 +1,8 @@
-#define RENDERTOY_HAS_GL
+#define MOLLY_HAS_GL
 #include <glad/glad.h>
 #include <cstddef>
 #include "mesh.h"
-#include "rdtmath.h"
+#include "molly_math.h"
 #include "utils.h"
 
 StaticMesh::StaticMesh() noexcept
@@ -15,7 +15,7 @@ StaticMesh::StaticMesh(Vertex* vertex_data, u32* index_data, i32 vcount, i32 ico
     this->populateOpenGLBuffers(vertex_data, index_data);
 }
 
-StaticMesh::StaticMesh(const rdt::MeshData& data) 
+StaticMesh::StaticMesh(const molly::MeshData& data) 
     : m_vertex_count{data.vertex_count}, m_index_count{data.index_count}, m_transform{data.world_transform}, m_material_index{data.material_index}
 {
     Vertex* vertex_data = (Vertex*)data.vertex_data;

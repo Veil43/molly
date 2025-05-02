@@ -1,8 +1,8 @@
-#ifndef RENDERTOY_MESH_H
-#define RENDERTOY_MESH_H
+#ifndef MOLLY_MESH_H
+#define MOLLY_MESH_H
 #include "types.h"
 #include "utils.h"
-#include "rdtmath.h"
+#include "molly_math.h"
 
 class StaticMesh {
 public:
@@ -25,7 +25,7 @@ public:
 
     StaticMesh() noexcept;    
     StaticMesh(Vertex* vertex_data, u32* index_data, i32 vcount, i32 icount, const glm::mat4& transform = glm::mat4(1.0f));
-    StaticMesh(const rdt::MeshData& data);
+    StaticMesh(const molly::MeshData& data);
 
     StaticMesh(StaticMesh&& other) noexcept;
     StaticMesh& operator=(StaticMesh&& other) noexcept;
@@ -40,4 +40,4 @@ private:
     void populateOpenGLBuffers(Vertex* vertex_data, u32* index_data);
 };
 
-#endif // RENDERTOY_MESH_H
+#endif // MOLLY_MESH_H

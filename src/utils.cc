@@ -1,4 +1,4 @@
-#define RENDERTOY_HAS_GL
+#define MOLLY_HAS_GL
 #include "utils.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -19,7 +19,7 @@
 
 #include "types.h"
 
-std::string rdt::loadTextFile(const char* path) {
+std::string molly::loadTextFile(const char* path) {
     std::ifstream file(path);
 
     if (!file) {
@@ -32,16 +32,16 @@ std::string rdt::loadTextFile(const char* path) {
     return text.str();
 }
 
-void rdt::log(const std::string& message) {
+void molly::log(const std::string& message) {
     std::cerr << message << std::endl;
 }
 
-void rdt::printGLInfo() {
+void molly::printGLInfo() {
     GL_QUERY_ERROR(const char* version = (char*)glGetString(GL_VERSION);)
     GL_QUERY_ERROR(const char* vendor = (char*)glGetString(GL_VENDOR);)
     GL_QUERY_ERROR(const char* renderer = (char*)glGetString(GL_RENDERER);)
     GL_QUERY_ERROR(const char* glsl_version = (char*)glGetString(GL_SHADING_LANGUAGE_VERSION);)
-    rdt::log(
+    molly::log(
         std::string(
         "================== OpenGL Information ===================\n") + 
         "VERSION: " + version + "\n"
@@ -61,22 +61,22 @@ void rdt::printGLInfo() {
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_vertex_attributes);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max_uniforms);)
 
-    rdt::log("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
-    rdt::log("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
-    rdt::log("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
-    rdt::log("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
-    rdt::log("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
+    molly::log("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
+    molly::log("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
+    molly::log("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
+    molly::log("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
+    molly::log("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
 
 }
 
-rdt::ImageData rdt::loadImageFile(const char* path) {
-    rdt::ImageData result = {};
+molly::ImageData molly::loadImageFile(const char* path) {
+    molly::ImageData result = {};
     int x = 0;
     int y = 0;
     int c = 0;
     unsigned char* data = stbi_load(path, &x, &y, &c, 0);
     if (!data) {
-        rdt::log(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
+        molly::log(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
     } else {
 
         result.data = data;
@@ -87,7 +87,7 @@ rdt::ImageData rdt::loadImageFile(const char* path) {
     return result;
 }
 
-void rdt::freeImageData(ImageData* img) {
+void molly::freeImageData(ImageData* img) {
     if (!img || !img->data)
         return;
  
@@ -176,57 +176,57 @@ GLTFDataCountPair GLTFGetAttributeData(tinygltf::Primitive* primitive, tinygltf:
     return GLTFGetAccessorData(model, accessor_index);
 }
 
-rdt::eTextureConfigOptions GLTFToRDTConfigConvert(unsigned int gltf_macro) {
+molly::eTextureConfigOptions GLTFToMollyConfigConvert(unsigned int gltf_macro) {
     switch (gltf_macro) {
         case TINYGLTF_TEXTURE_FILTER_NEAREST: {
-            return rdt::eTextureConfigOptions::kTextureFilterNearest;
+            return molly::eTextureConfigOptions::kTextureFilterNearest;
         } break;
 
         case TINYGLTF_TEXTURE_FILTER_LINEAR: {
-            return rdt::eTextureConfigOptions::kTextureFilterLinear;
+            return molly::eTextureConfigOptions::kTextureFilterLinear;
         } break;
 
         case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST: {
-            return rdt::eTextureConfigOptions::kTextureFilterNearestMipmapNearest;
+            return molly::eTextureConfigOptions::kTextureFilterNearestMipmapNearest;
         } break;
 
         case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST: {
-            return rdt::eTextureConfigOptions::kTextureFilterLinearMipmapNearest;
+            return molly::eTextureConfigOptions::kTextureFilterLinearMipmapNearest;
         } break;
 
         case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR: {
-            return rdt::eTextureConfigOptions::kTextureFilterNearestMipmapLinear;
+            return molly::eTextureConfigOptions::kTextureFilterNearestMipmapLinear;
         } break;
 
         case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR: {
-            return rdt::eTextureConfigOptions::kTextureFilterLinearMipmapLinear;
+            return molly::eTextureConfigOptions::kTextureFilterLinearMipmapLinear;
         } break;
 
         case TINYGLTF_TEXTURE_WRAP_REPEAT: {
-            return rdt::eTextureConfigOptions::kTextureWrapRepeat;
+            return molly::eTextureConfigOptions::kTextureWrapRepeat;
         } break;
         case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE: {
-            return rdt::eTextureConfigOptions::kTextureWrapClampToEdge;
+            return molly::eTextureConfigOptions::kTextureWrapClampToEdge;
         } break;
         case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT: {
-            return rdt::eTextureConfigOptions::kTextureWrapMirroredRepeat;
+            return molly::eTextureConfigOptions::kTextureWrapMirroredRepeat;
         } break;
 
         default: {
-            return rdt::eTextureConfigOptions::kError;
+            return molly::eTextureConfigOptions::kError;
         }
     }
 }
 
-rdt::TextureInfo GLTFGetTextureData(gltf::Texture* texture, gltf::Model* model) {
-    rdt::TextureInfo result = {};
+molly::TextureInfo GLTFGetTextureData(gltf::Texture* texture, gltf::Model* model) {
+    molly::TextureInfo result = {};
     // check for negatives -1
     if (texture->sampler >= 0) {
         const gltf::Sampler& sampler = model->samplers[texture->sampler];
-        result.filter_wrap_config.min_filter = GLTFToRDTConfigConvert(sampler.minFilter);
-        result.filter_wrap_config.mag_filter = GLTFToRDTConfigConvert(sampler.magFilter);
-        result.filter_wrap_config.wrap_s = GLTFToRDTConfigConvert(sampler.wrapS);
-        result.filter_wrap_config.wrap_t = GLTFToRDTConfigConvert(sampler.wrapT);
+        result.filter_wrap_config.min_filter = GLTFToMollyConfigConvert(sampler.minFilter);
+        result.filter_wrap_config.mag_filter = GLTFToMollyConfigConvert(sampler.magFilter);
+        result.filter_wrap_config.wrap_s = GLTFToMollyConfigConvert(sampler.wrapS);
+        result.filter_wrap_config.wrap_t = GLTFToMollyConfigConvert(sampler.wrapT);
     }
 
     if (texture->source >= 0) {
@@ -238,8 +238,8 @@ rdt::TextureInfo GLTFGetTextureData(gltf::Texture* texture, gltf::Model* model) 
     return result;
 }
 
-rdt::MaterialData GLTFGetPrimitiveMaterial(gltf::Primitive* primitive, gltf::Model* model) {
-    rdt::MaterialData result = {};
+molly::MaterialData GLTFGetPrimitiveMaterial(gltf::Primitive* primitive, gltf::Model* model) {
+    molly::MaterialData result = {};
     if (primitive->material < 0)  {
         return result;
     }
@@ -279,7 +279,7 @@ rdt::MaterialData GLTFGetPrimitiveMaterial(gltf::Primitive* primitive, gltf::Mod
     return result;
 }
 
-rdt::ModelData rdt::loadModel(const char* path) {
+molly::ModelData molly::loadModel(const char* path) {
     gltf::Model model;
     gltf::TinyGLTF loader;
     std::string err;
@@ -288,16 +288,16 @@ rdt::ModelData rdt::loadModel(const char* path) {
     bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, path);
 
     if (!warn.empty()) {
-        rdt::log("WARNING: " + warn);
+        molly::log("WARNING: " + warn);
     }
 
     if (!err.empty()) {
-        rdt::log("ERROR: " + err);
+        molly::log("ERROR: " + err);
     }
     
     if (!ret) {
         std::string msg = "ERROR: Failed to load a 3D model from file: ";
-        rdt::log(msg + path);
+        molly::log(msg + path);
         return {};
     }
 
@@ -342,8 +342,8 @@ rdt::ModelData rdt::loadModel(const char* path) {
 
             gltf::Mesh node_mesh = model.meshes[curr_node.mesh];              // grab mesh data from each mesh
             for (auto& primitive : node_mesh.primitives) {              // for each primitive in the mesh
-                rdt::MeshData mesh_data = {};
-                rdt::MaterialData material_data = GLTFGetPrimitiveMaterial(&primitive, &model);
+                molly::MeshData mesh_data = {};
+                molly::MaterialData material_data = GLTFGetPrimitiveMaterial(&primitive, &model);
                 
                 mesh_data.world_transform = node_transform;
 

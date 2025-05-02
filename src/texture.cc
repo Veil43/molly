@@ -1,4 +1,4 @@
-#define RENDERTOY_HAS_GL
+#define MOLLY_HAS_GL
 
 #include "texture.h"
 #include <glad/glad.h>
@@ -21,7 +21,7 @@ Texture::Texture(const char* path) {
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);)
 
-    rdt::ImageData image = rdt::loadImageFile(path);
+    molly::ImageData image = molly::loadImageFile(path);
     u32 format = GL_RGB + (image.channel_count % 3);
 
     if (image.data) {
@@ -30,7 +30,7 @@ Texture::Texture(const char* path) {
     }
 
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, 0);)
-    rdt::freeImageData(&image);
+    molly::freeImageData(&image);
 }
 
 Texture::Texture(Texture&& other) noexcept  {

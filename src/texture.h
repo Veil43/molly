@@ -1,5 +1,5 @@
-#ifndef RENDERTOY_TEXTURE_H
-#define RENDERTOY_TEXTURE_H
+#ifndef MOLLY_TEXTURE_H
+#define MOLLY_TEXTURE_H
 #include "types.h"
 
 class Texture {
@@ -11,7 +11,7 @@ public:
 
     Texture() noexcept;
     Texture(const char* path);
-    // Texture(const rdt::ImageData& image);
+    // Texture(const molly::ImageData& image);
 
     Texture(Texture&&) noexcept;
     Texture& operator=(Texture&&) noexcept;
@@ -25,4 +25,4 @@ public:
     void unbind() const noexcept;
 };
 
-#endif // RENDERTOY_TEXTURE_H
+#endif // MOLLY_TEXTURE_H

@@ -1,6 +1,6 @@
-#define RENDERTOY_HAS_GL
+#define MOLLY_HAS_GL
 
-#include "rendertoy.h"
+#include "molly.h"
 #include <glad/glad.h>
 
 #include <string>
@@ -14,7 +14,7 @@
 #include "utils.h"
 #include "mesh.h"
 #include "texture.h"
-#include "rdtmath.h"
+#include "molly_math.h"
 #include "camera.h"
 #include "material.h"
 #include "light.h"
@@ -230,50 +230,50 @@ static Texture container_diffuse_map{};
 static Texture container_specular_map{};
 static Camera cam{};
 static u32* texture_handles;
-static std::vector<rdt::MaterialData> s_materials;
+static std::vector<molly::MaterialData> s_materials;
 
 u32 convertTextureConfigOption(u32 option) {
-    switch (static_cast<rdt::eTextureConfigOptions>(option)) {
-        case rdt::eTextureConfigOptions::kTextureFilterNearest: {
+    switch (static_cast<molly::eTextureConfigOptions>(option)) {
+        case molly::eTextureConfigOptions::kTextureFilterNearest: {
             return GL_NEAREST;
         } break;
-        case rdt::eTextureConfigOptions::kTextureFilterLinear: {
+        case molly::eTextureConfigOptions::kTextureFilterLinear: {
             return GL_LINEAR;
         } break;
-        case rdt::eTextureConfigOptions::kTextureFilterNearestMipmapNearest: {
+        case molly::eTextureConfigOptions::kTextureFilterNearestMipmapNearest: {
             return GL_NEAREST_MIPMAP_NEAREST;
         } break;
-        case rdt::eTextureConfigOptions::kTextureFilterLinearMipmapNearest: {
+        case molly::eTextureConfigOptions::kTextureFilterLinearMipmapNearest: {
             return GL_LINEAR_MIPMAP_NEAREST;
         } break;
-        case rdt::eTextureConfigOptions::kTextureFilterNearestMipmapLinear: {
+        case molly::eTextureConfigOptions::kTextureFilterNearestMipmapLinear: {
             return GL_NEAREST_MIPMAP_LINEAR;
         } break;
-        case rdt::eTextureConfigOptions::kTextureFilterLinearMipmapLinear: {
+        case molly::eTextureConfigOptions::kTextureFilterLinearMipmapLinear: {
             return GL_LINEAR_MIPMAP_LINEAR;
         } break;
-        case rdt::eTextureConfigOptions::kTextureWrapRepeat: {
+        case molly::eTextureConfigOptions::kTextureWrapRepeat: {
             return GL_REPEAT;
         } break;
-        case rdt::eTextureConfigOptions::kTextureWrapClampToEdge: {
+        case molly::eTextureConfigOptions::kTextureWrapClampToEdge: {
             return GL_CLAMP_TO_EDGE;
         } break;
-        case rdt::eTextureConfigOptions::kTextureWrapMirroredRepeat: {
+        case molly::eTextureConfigOptions::kTextureWrapMirroredRepeat: {
             return GL_MIRRORED_REPEAT;
         } break;
-        case rdt::eTextureConfigOptions::kError: {
-            rdt::log("ERROR::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
+        case molly::eTextureConfigOptions::kError: {
+            molly::log("ERROR::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
             return 0;
         } break;
 
         default: {
-            rdt::log("ERROR???::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
+            molly::log("ERROR???::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
             return 0;
         }
     }
 }
 
-void configureTexture(const rdt::TextureConfig& config) {
+void configureTexture(const molly::TextureConfig& config) {
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convertTextureConfigOption(config.min_filter));)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convertTextureConfigOption(config.mag_filter));)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, convertTextureConfigOption(config.wrap_s));)
@@ -281,7 +281,7 @@ void configureTexture(const rdt::TextureConfig& config) {
 }
 
 // to be called at runtime (I think)
-void setMaterial(const Shader& shader, const rdt::MaterialData& mat) {
+void setMaterial(const Shader& shader, const molly::MaterialData& mat) {
     // struct MaterialData {
     //     TextureInfo base_color;
     //     TextureInfo metallic_roughness;
@@ -294,10 +294,10 @@ void setMaterial(const Shader& shader, const rdt::MaterialData& mat) {
     //     float metallic_factor;
     //     float roughness_factor;
     // };
-    // #define RDT_DIFFUSE_MAP_TEXTURE_UNIT            (0)
-    // #define RDT_SPECULAR_MAP_TEXTURE_UNIT           (1)
-    // #define RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT (2)
-    // #define RDT_NORMAL_MAP_TEXTURE_UNIT             (3)
+    // #define MOLLY_DIFFUSE_MAP_TEXTURE_UNIT            (0)
+    // #define MOLLY_SPECULAR_MAP_TEXTURE_UNIT           (1)
+    // #define MOLLY_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT (2)
+    // #define MOLLY_NORMAL_MAP_TEXTURE_UNIT             (3)
 
     // shader.bind();
     // -------------- vecn + scalar values -----------------
@@ -306,43 +306,44 @@ void setMaterial(const Shader& shader, const rdt::MaterialData& mat) {
     shader.setFloat("pbr_material.roughness_factor", mat.roughness_factor);
     // --------------- sampler2D values -----------------
     // --------------------- DIFFUSE ----------------------
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_DIFFUSE_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + MOLLY_DIFFUSE_MAP_TEXTURE_UNIT);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.base_color.image_index]);)
     configureTexture(mat.base_color.filter_wrap_config);
-    shader.setInt("pbr_material.diffuse_map", RDT_DIFFUSE_MAP_TEXTURE_UNIT);
+    shader.setInt("pbr_material.diffuse_map", MOLLY_DIFFUSE_MAP_TEXTURE_UNIT);
 
     // ----------------- METALLIC-ROUGHNESS ------------------
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + MOLLY_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.metallic_roughness.image_index]);)
     configureTexture(mat.metallic_roughness.filter_wrap_config);
-    shader.setInt("pbr_material.metallic_roughness_map", RDT_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);
+    shader.setInt("pbr_material.metallic_roughness_map", MOLLY_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT);
     
     // ------------------ NORMAL ----------------------------
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + RDT_NORMAL_MAP_TEXTURE_UNIT);)
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + MOLLY_NORMAL_MAP_TEXTURE_UNIT);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[mat.normal.image_index]);)
     configureTexture(mat.normal.filter_wrap_config);
-    shader.setInt("pbr_material.normal_map", RDT_NORMAL_MAP_TEXTURE_UNIT);
+    shader.setInt("pbr_material.normal_map", MOLLY_NORMAL_MAP_TEXTURE_UNIT);
     // shader.setInt("pbr_material.emissive_map", mat.normal.image_index);
     // shader.setInt("pbr_material.occlusion_map", mat.normal.image_index);
     // shader.unbind();
 }
 
-void renderToyOnStartupCall(f32 aspect_ratio) {
+void mollyToyOnStartupCall(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
     // -- Platform Configurations --
     platformDisableMouseCursor();
 
     // TODO: Have an asset manager
+    // We will need a globally available context for the renderer
 
-    rdt::ModelData backpack_model = rdt::loadModel("../data/survival_guitar_backpack/scene.gltf");
+    molly::ModelData backpack_model = molly::loadModel("../data/survival_guitar_backpack/scene.gltf");
     texture_handles = new u32[backpack_model.images.size()];
     glGenTextures(backpack_model.images.size(), texture_handles);
     s_materials = backpack_model.materials;
 
     // Load texture images to GPU and store handles sequentially
     for (size_t i = 0; i < backpack_model.images.size(); i++) {
-        glBindTexture(GL_TEXTURE_2D, texture_handles[i]);
+        GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture_handles[i]);)
 
         // TODO: Verify correctness
         u32 format = GL_RGB + (backpack_model.images[i].channel_count % 3);
@@ -350,18 +351,18 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
         if (backpack_model.images[i].channel_size == 16) {
             internal_format = GL_RGB16;
         }
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, backpack_model.images[i].width, backpack_model.images[i].height, 0, format, GL_UNSIGNED_BYTE, backpack_model.images[i].data);
+        GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, backpack_model.images[i].width, backpack_model.images[i].height, 0, format, GL_UNSIGNED_BYTE, backpack_model.images[i].data);)
         GL_QUERY_ERROR(glGenerateMipmap(GL_TEXTURE_2D);)
     }
 
     for (auto& mesh : backpack_model.meshes) {
         StaticMesh static_mesh{mesh};
         // Where is this meshe's material?
-        const rdt::MaterialData& mesh_mat = backpack_model.materials[mesh.material_index]; 
+        const molly::MaterialData& mesh_mat = backpack_model.materials[mesh.material_index]; 
         backpack.push_back(std::move(static_mesh));
     }
 
-    rdt::printGLInfo();
+    molly::printGLInfo();
     cube = StaticMesh((Vertex*)square_vertices, nullptr, 36, 0);
     // shader = Shader("../src/shaders/vsample.glsl", "../src/shaders/fsample.glsl");
     shader = Shader("../src/shaders/vno_mat.glsl", "../src/shaders/fno_mat.glsl");
@@ -369,11 +370,11 @@ void renderToyOnStartupCall(f32 aspect_ratio) {
     container_specular_map= Texture("../data/container_specular.png");
 
     shader.bind();
-    shader.setInt("container.diffuse_map", RDT_DIFFUSE_MAP_TEXTURE_UNIT);
-    shader.setInt("container.specular_map", RDT_SPECULAR_MAP_TEXTURE_UNIT);
+    shader.setInt("container.diffuse_map", MOLLY_DIFFUSE_MAP_TEXTURE_UNIT);
+    shader.setInt("container.specular_map", MOLLY_SPECULAR_MAP_TEXTURE_UNIT);
     shader.setFloat("container.shininess", 32.0f);
-    container_diffuse_map.bind(RDT_DIFFUSE_MAP_TEXTURE_UNIT);
-    container_specular_map.bind(RDT_SPECULAR_MAP_TEXTURE_UNIT);
+    container_diffuse_map.bind(MOLLY_DIFFUSE_MAP_TEXTURE_UNIT);
+    container_specular_map.bind(MOLLY_SPECULAR_MAP_TEXTURE_UNIT);
     shader.unbind();
 
     glm::mat4 model(1.0f);
@@ -454,7 +455,7 @@ void renderBackPack() {
 
     for (auto& mesh : backpack) {
         glm::mat4 model = mesh.m_transform;
-        const rdt::MaterialData& mesh_mat = s_materials[mesh.m_material_index]; 
+        const molly::MaterialData& mesh_mat = s_materials[mesh.m_material_index]; 
         
         setMaterial(shader, mesh_mat);
         mesh.bind();
@@ -465,22 +466,22 @@ void renderBackPack() {
     shader.unbind();
 }
 
-void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
+void mollyToyRenderLoop(f64 delta_time, PlatformInput input) {
     GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
     glm::mat4 model(1.0f);
 
     if (input.w_key.is_down) {
-        cam.processMovementInput(rdt::eMovement::kForward, delta_time);
+        cam.processMovementInput(molly::eMovement::kForward, delta_time);
     }
     if (input.s_key.is_down) {
-        cam.processMovementInput(rdt::eMovement::kBackward, delta_time);
+        cam.processMovementInput(molly::eMovement::kBackward, delta_time);
     }
     if (input.a_key.is_down) {
-        cam.processMovementInput(rdt::eMovement::kLeft, delta_time);
+        cam.processMovementInput(molly::eMovement::kLeft, delta_time);
     }
     if (input.d_key.is_down) {
-        cam.processMovementInput(rdt::eMovement::kRight, delta_time);
+        cam.processMovementInput(molly::eMovement::kRight, delta_time);
     } 
 
     cam.processMouseMovementInput(input.mouse_x - input.mouse_prevx, input.mouse_prevy - input.mouse_y, delta_time);
@@ -515,7 +516,7 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
     shader.unbind();
 #endif
     // Timing Information --------------------------------------------------
-#ifdef RENDERTOY_DEBUG
+#ifdef MOLLY_DEBUG
     static u32 frame_count = 0;
     static f64 time_accumilator = 0.0f;
     static u32 old_fps = 0.0f;
@@ -528,7 +529,7 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
         old_fps = fps;
         std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps) 
         + " | Primitive Count: " + std::to_string(backpack.size());
-        rdt::log(timing);
+        molly::log(timing);
         time_accumilator = 0.0f;
         frame_count = 0;
     }
@@ -536,6 +537,6 @@ void renderToyRenderLoop(f64 delta_time, PlatformInput input) {
 }
 
 // Services
-void renderToyMouseScroll(f32 yoffset) {
+void mollyMouseScroll(f32 yoffset) {
     cam.processMouseScrollInput(yoffset);
 }

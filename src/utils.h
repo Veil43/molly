@@ -1,7 +1,7 @@
-#ifndef RENDERTOY_UTIL_H
-#define RENDERTOY_UTIL_H
+#ifndef MOLLY_UTIL_H
+#define MOLLY_UTIL_H
 
-#ifdef RENDERTOY_DEBUG
+#ifdef MOLLY_DEBUG
 #ifdef _WIN32
 #define DEBUG_BREAK __debugbreak();
 #else
@@ -14,16 +14,16 @@
         std::ostringstream oss;                                                             \
         oss << "ERROR::OPENGL: 0x" << std::hex << err__ << std::dec                         \
             << " in file: " << __FILE__ << " at line: " << __LINE__;                        \
-        rdt::log(oss.str());                                                                \
+        molly::log(oss.str());                                                                \
         DEBUG_BREAK                                                                         \
     }
 
-#define RDT_ASSERT(expr) \
+#define MOLLY_ASSERT(expr) \
     if (!expr) {*(int *)0 = 0;}
 #else
 #define GL_QUERY_ERROR(glFunction) \
     glFunction
-#define RDT_ASSERT(expr)
+#define MOLLY_ASSERT(expr)
 #endif
 
 #include <string>
@@ -31,9 +31,9 @@
 #include <vector>
 
 #include "glfw_utils.h"
-#include "rdtmath.h"
+#include "molly_math.h"
 
-namespace rdt {
+namespace molly {
     struct ImageData {
         unsigned char* data;
         int width;
@@ -117,6 +117,6 @@ namespace rdt {
     void freeModel(ModelData*);
     float* concatModelArrays(const MeshData& data);
 
-} // namespace rdt
+} // namespace molly
 
-#endif //RENDERTOY_UTIL_H
+#endif //MOLLY_UTIL_H

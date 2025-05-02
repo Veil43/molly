@@ -1,3 +1,3 @@
 @echo off
 
-devenv .\build\rendertoy-gl.exe
+devenv .\build\molly.exe

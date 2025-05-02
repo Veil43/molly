@@ -1,5 +1,5 @@
-#ifndef RENDERTOY_TYPES_H
-#define RENDERTOY_TYPES_H
+#ifndef MOLLY_TYPES_H
+#define MOLLY_TYPES_H
 
 #include <cstdint>
 
@@ -15,4 +15,4 @@ typedef int64_t i64;
 typedef float f32;
 typedef double f64;
 
-#endif // RENDERTOY_TYPES_H
+#endif // MOLLY_TYPES_H

@@ -1,8 +1,8 @@
-#ifndef RENDERTOY_SHADER_H
-#define RENDERTOY_SHADER_H
+#ifndef MOLLY_SHADER_H
+#define MOLLY_SHADER_H
 #include "types.h"
 #include <string>
-#include "rdtmath.h"
+#include "molly_math.h"
 
 #include "texture.h"
 

@@ -1,5 +1,5 @@
-#ifndef RENDERTOY_SCENE_H
-#define RENDERTOY_SCENE_H
+#ifndef MOLLY_SCENE_H
+#define MOLLY_SCENE_H
 
 #include <vector>
 #include "types.h"
@@ -12,4 +12,4 @@ struct Scene {
     std::vector<i32> m_nodes;
 };
 
-#endif // RENDERTOY_SCENE_H
+#endif // MOLLY_SCENE_H

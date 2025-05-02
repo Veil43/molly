@@ -1,6 +1,6 @@
-#ifndef RENDERTOY_GLFW_UTIL_H
-#define RENDERTOY_GLFW_UTIL_H
+#ifndef MOLLY_GLFW_UTIL_H
+#define MOLLY_GLFW_UTIL_H
 
 double GLFWGetTime();
 
-#endif // RENDERTOY_GLFW_UTIL_H
+#endif // MOLLY_GLFW_UTIL_H

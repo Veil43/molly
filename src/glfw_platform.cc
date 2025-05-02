@@ -1,7 +1,7 @@
 #include <iostream>
 #include "glfw_platform.h"
 #include "config.h"
-#include "rendertoy_services.h"
+#include "molly_services.h"
 
 static PlatformInput 
 processInput(GLFWPlatformWindow w, PlatformInput);
@@ -21,7 +21,7 @@ GLFW_DECL_FRAMEBUFFER_SIZE_CALLBACK(platformDefaultFramebufferSizeCallback) {
 }
 
 GLFW_DECL_SCROLL_CALLBACK(platformDefaultScrollCallback) {
-    renderToyMouseScroll(yoffset);
+    mollyMouseScroll(yoffset);
 }
 
 // GLOBAL VARIABLES FOR THE PLATFORM LAYER
@@ -129,7 +129,7 @@ GLFWPlatformWindow platformCreateGLFWWindow() {
     initializePlatformServices(window.window_handle);
 
     // Call application startup code
-    renderToyOnStartupCall(window.window_width/window.window_height);
+    mollyToyOnStartupCall(window.window_width/window.window_height);
     
     return window;
 }
@@ -147,7 +147,7 @@ void platformRunGLFWWindowLoop(GLFWPlatformWindow window) {
         // Call application looping code ----------
         PlatformInput new_input = processInput(window, old_input);
         old_input = new_input;
-        renderToyRenderLoop(s_delta_time, new_input);
+        mollyToyRenderLoop(s_delta_time, new_input);
 
         glfwSwapBuffers(window.window_handle);
         
@@ -156,7 +156,7 @@ void platformRunGLFWWindowLoop(GLFWPlatformWindow window) {
         s_delta_time = (new_time - s_last_time);
         s_last_time = new_time;
 
-#ifdef RENDERTOY_DEBUG
+#ifdef MOLLY_DEBUG
         auto message = std::string("Polling time: ") + std::to_string(polling_time);
         // platformGLFWCMDLog(message.c_str());
 #endif

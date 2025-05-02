@@ -69,21 +69,21 @@ glm::mat4 Camera::getProjectionMatrix() const {
 }
 
 
-void Camera::processMovementInput(rdt::eMovement direction, f32 delta_time) {
+void Camera::processMovementInput(molly::eMovement direction, f32 delta_time) {
     switch (direction) {
-        case rdt::eMovement::kForward : {
+        case molly::eMovement::kForward : {
             this->m_position += this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case rdt::eMovement::kBackward : {
+        case molly::eMovement::kBackward : {
             this->m_position -= this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case rdt::eMovement::kLeft : {
+        case molly::eMovement::kLeft : {
             this->m_position -= this->m_right * this->m_movement_speed * delta_time;
         } break;
         
-        case rdt::eMovement::kRight : {
+        case molly::eMovement::kRight : {
             this->m_position += this->m_right * this->m_movement_speed * delta_time;
         } break;
 
@@ -111,7 +111,7 @@ void Camera::processMouseMovementInput(f32 xoffset, f32 yoffset, f32 delta_time)
     this->updateCameraVectors();
 
     // TODO: remove this in the future
-    // rdt::log(std::string("Mouse: (") + std::to_string(xoffset) + ", " + std::to_string(yoffset) + ")");
+    // molly::log(std::string("Mouse: (") + std::to_string(xoffset) + ", " + std::to_string(yoffset) + ")");
 }
 
 void Camera::processMouseScrollInput(f32 yoffset) {
@@ -141,5 +141,5 @@ void Camera::updateCameraVectors() {
     this->m_up = glm::normalize(glm::cross(this->m_right, this->m_lookat));
 
     // TODO Sort this out
-    // rdt::log(std::string("Lookat: [") + std::to_string(m_lookat.x) + "," + std::to_string(m_lookat.y) + "," + std::to_string(m_lookat.z) + "]");
+    // molly::log(std::string("Lookat: [") + std::to_string(m_lookat.x) + "," + std::to_string(m_lookat.y) + "," + std::to_string(m_lookat.z) + "]");
 }

@@ -1,12 +1,12 @@
-#ifndef RENDERTOY_PLATFORM_SERVICES_H
-#define RENDERTOY_PLATFORM_SERVICES_H
+#ifndef MOLLY_PLATFORM_SERVICES_H
+#define MOLLY_PLATFORM_SERVICES_H
 
 #include "types.h"
 
 #define PLATFORM_DECL_SCROLL_CALLBACK(name) void name(void* window, double xoffset, double yoffset)
 typedef PLATFORM_DECL_SCROLL_CALLBACK(PlatformScrollCallbackType);
 
-// input should be on rendertoy-gl side
+// input should be on molly's side
 struct PlatformKey {
     u16 is_down;
     u16 was_down;
@@ -29,4 +29,4 @@ f64 platformMeasureTimeElapsed(bool reset = false);
 void platformDisableMouseCursor(void* platformWindow = nullptr);
 void platformEnableMouseCursor(void* platformWindow = nullptr);
 
-#endif // RENDERTOY_PLATFORM_SERVICES_H
+#endif // MOLLY_PLATFORM_SERVICES_H

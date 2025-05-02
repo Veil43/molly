@@ -1,5 +1,5 @@
-#ifndef RENDERTOY_MATH_H
-#define RENDERTOY_MATH_H
+#ifndef MOLLY_MATH_H
+#define MOLLY_MATH_H
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,4 +11,4 @@ struct Vertex {
     glm::vec2 tex_coord;
 };
 
-#endif // RENDERTOY_MATH_H
+#endif // MOLLY_MATH_H

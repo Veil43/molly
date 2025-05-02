@@ -1,7 +1,7 @@
-#ifndef RENDERTOY_CAMRA_H
-#define RENDERTOY_CAMRA_H
+#ifndef MOLLY_CAMERA_H
+#define MOLLY_CAMERA_H
 
-#include "rdtmath.h"
+#include "molly_math.h"
 #include "types.h"
 #include "utils.h"
 
@@ -55,7 +55,7 @@ public:
 
     glm::mat4 getViewMatrix() const;
     glm::mat4 getProjectionMatrix() const;
-    void processMovementInput(rdt::eMovement direction, f32 delta_time);
+    void processMovementInput(molly::eMovement direction, f32 delta_time);
 
     void processMouseMovementInput(f32 xoffset, f32 yoffset, f32 delta_time);
     void processMouseScrollInput(f32 yoffset);
@@ -63,4 +63,4 @@ public:
     void updateCameraVectors();
 };
 
-#endif // RENDERTOY_CAMRA_H
+#endif // MOLLY_CAMERA_H

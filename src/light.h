@@ -1,8 +1,8 @@
-#ifndef RENDERTOY_LIGHT_H
-#define RENDERTOY_LIGHT_H
+#ifndef MOLLY_LIGHT_H
+#define MOLLY_LIGHT_H
 
 #include "types.h"
-#include "rdtmath.h"
+#include "molly_math.h"
 
 struct PointLight {
     glm::vec3 position;
@@ -34,4 +34,4 @@ struct SpotLight {
     f32 outer_cutoff;
 };
 
-#endif // RENDERTOY_LIGHT_H
+#endif // MOLLY_LIGHT_H
