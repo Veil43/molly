@@ -15,7 +15,8 @@ add_executable(molly src/main.cc
     src/shader.cc
     src/texture.cc
     src/utils.cc
-    src/glfw_utils.cc)
+    src/glfw_utils.cc
+    src/asset_registry.cc)
 
 # Define debug symbols
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

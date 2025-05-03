@@ -18,6 +18,7 @@
 #include "camera.h"
 #include "material.h"
 #include "light.h"
+// #include "context.h"
 
 static f32 vertices[] = {
      0.5f,  0.5f, 0.0f,    1.0f, 1.0f,    1.0f, 0.0f, 0.0f,
@@ -335,6 +336,7 @@ void mollyToyOnStartupCall(f32 aspect_ratio) {
 
     // TODO: Have an asset manager
     // We will need a globally available context for the renderer
+    // g_context.asset_registry;
 
     molly::ModelData backpack_model = molly::loadModel("../data/survival_guitar_backpack/scene.gltf");
     texture_handles = new u32[backpack_model.images.size()];
