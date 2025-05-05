@@ -53,9 +53,6 @@ include(Catch)
 # create test target
 add_executable(molly_tests
     tests/test_sample.cc
-    third-party/glad/src/glad.c
-    src/utils.cc
-    src/glfw_utils.cc
     src/asset_registry.cc
     src/context.cc) 
 

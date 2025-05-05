@@ -2,11 +2,24 @@
 
 #include <fstream>
 #include <optional>
+#include <sstream>
 
-#include "utils.h"
 #include "types.h"
 
 using namespace tmp;
+
+std::string loadTextFile(const char* path) {
+    std::ifstream file(path);
+
+    if (!file) {
+        std::cerr << "UTIL::IO: Could not open file: " << path << std::endl;
+        return "";
+    }
+
+    std::ostringstream text;
+    text << file.rdbuf();
+    return text.str();
+}
 
 auto AssetRegistry::getTextFile(ARegHandle h) -> std::shared_ptr<TextFile> { 
     if (h.type() != MOLLY_ASSET_TEXT_FILE_TYPE) {
@@ -32,7 +45,7 @@ ARegHandle AssetRegistry::loadAsset(const std::string& path, u32 type, std::opti
 
     switch (type) {
         case MOLLY_ASSET_TEXT_FILE_TYPE: {
-            std::string file_data = molly::loadTextFile(path.c_str());
+            std::string file_data = loadTextFile(path.c_str());
             TextFile file = {};
             file.data = file_data;
             
