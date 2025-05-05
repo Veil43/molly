@@ -3,13 +3,16 @@
 
 #include "asset_registry.h"
 
+
 struct RendererContext {
-private:
-    AssetRegistry private_asset_registry;
-public:
-    const AssetRegistry& asset_registry = private_asset_registry;
+    tmp::AssetRegistry asset_registry;
+
+    void init();
 
     // --------- Config goes here ------------
+    const char* cache_dir = "cache/";
+    const char* asset_dir = "assets/";
+
 };
 
 extern RendererContext g_context;

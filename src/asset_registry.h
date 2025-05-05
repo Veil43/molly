@@ -7,9 +7,14 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <iostream>
+#include <optional>
+#include <filesystem>
 
 #include "types.h"
 #include "molly_math.h"
+
+namespace fs = std::filesystem;
 
 namespace tmp {
 
@@ -39,6 +44,7 @@ struct ARegHandle {
 };
 
 struct TextFile {
+    std::string name;
     std::string data;
 };
 
@@ -101,14 +107,15 @@ struct Asset {
 #define MOLLY_ASSET_MATERIAL_TYPE       4u
 #define MOLLY_ASSET_STATIC_MESH_TYPE    5u
 #define MOLLY_ASSET_MODEL_TYPE          6u
-// #define MOLLY_ASSET_ASSET_TYPE          255u
 #define MOLLY_ASSET_UNKOWN_TYPE         0u
 
 // NOTE:  At some point we will want to implement these arenas an pools I've been hearing about
 // At that point we may want to start doing batch allocations and deletion because things will be in contiguous memory chuncks.
 // But for now std::vector and std::array will do the trick
-class AssetRegistry {
+struct AssetRegistry {
 public:
+    std::string cache_dir;
+    std::string asset_dir;
     // ids go from 0 -> 7  for the AssetTypes starting at 0 for shader and 7 for asset.
     //                              gives an array of 8     gives a handle
     // validation looks like m_live_handles[handle.index()][handle.type()].generation() == handle.generation()
@@ -118,32 +125,59 @@ public:
 
     //          type        free_indices
     std::vector<std::queue<u32>> m_free_handle_indices;
-    
 
-    std::unordered_map<std::string, std::string> m_asset_cache; // raw path to binary path
-    std::vector<TextFile> m_text_files;                         // a name, a path, a shader id, a gl-program id
-    std::vector<Image> m_images;                                // a name, a path, an image id, a buffer, a gl texture id
-    std::vector<Texture> m_textures;                            // a name, an image id, an id, a min/mag filter, a wrap s/t
-    std::vector<Material> m_materials;                          // a name, a material id, a texture id for: diffuse map, metallic roughness map, normal map, 
-                                                                // a vector for diffuse factor, a float for metallic factor, a float for roughness factor
-    std::vector<StaticMesh> m_static_meshes;                    // a name, a mesh id, a material id, a vao, a transform, a data buffer
-    std::vector<Model> m_models;                                // a name, a model id, a transform, a list of mesh ids, 
-    // std::vector<Asset> m_assets;                                // a name, a path, an asset id, a model id, a shader id, a raw path
+    std::unordered_map<std::string, std::string> m_asset_cache;
+    std::vector<TextFile> m_text_files;
+    std::vector<Image> m_images;
+    std::vector<Texture> m_textures;
+    std::vector<Material> m_materials;
+    std::vector<StaticMesh> m_static_meshes;
+    std::vector<Model> m_models;
+
+    auto init(const std::string& cache_path, const std::string& asset_path) -> bool {
+        this->cache_dir = cache_path;
+        this->asset_dir = asset_path;
+        
+        // init m_live_handles
+        // init m_free_handle_indices
+        // init m_free_handles
+
+        fs::create_directory(this->cache_dir);
+        fs::create_directory(this->asset_dir);
+
+        // Load the cache if it exists
+        auto cache_map = loadCache(this->cache_dir + "cache.bin");
+        this->m_asset_cache = cache_map;
+
+        this->m_free_handle_indices = std::vector<std::queue<u32>>{MOLLY_ASSET_TYPE_COUNT};
+        return true; 
+    }
 
     /*
         @param str: name or path to be loaded
-        @param option: `0` for path and `1` for name.
+        @param asset_type: MOLLY_ASSET_...
     */
-    ARegHandle loadAsset(const std::string& str, u32 asset_type);   // Store it into the respective array, generate a handle and store it AND 
+    auto loadAsset(const std::string& str, u32 asset_type, std::optional<std::string> name) -> ARegHandle;   // Store it into the respective array, generate a handle and store it AND 
                                                                 // if possible store paths of binary and raw in cache
-    void deleteAsset(ARegHandle);   // TODO: (Later) maybe we could add some sort of deletion queue so that we can delete a bunch all at once. Also invalidate the handle
-    bool cacheAsset(ARegHandle);    // TODO: maybe see what actual params you need for implementation
+    auto  storeAsset(TextFile&& file) -> ARegHandle;
 
-private:
-    void clearDeletedAssets();
-    void loadCache();
-    ARegHandle loadAssetBin(const std::string& str, u32 type) {return {};}
-    ARegHandle storeAsset(TextFile&& file);
+    /*
+    binary file at: asset_dir/asset.name.asset
+    */
+    auto writeAssetToBinary(ARegHandle h) -> std::string;
+    auto readAssetFromBinary(const std::string& path, u32 type) -> ARegHandle;
+
+    // TODO: Add Generation checking
+    auto getTextFile(ARegHandle h) -> std::shared_ptr<TextFile>;
+    auto loadCache(const std::string& src) -> std::unordered_map<std::string, std::string>;
+    auto storeCache(const std::string& dest) -> void;
+    auto deleteAsset(ARegHandle) -> auto;   // TODO: (Later) maybe we could add some sort of deletion queue so that we can delete a bunch all at once. Also invalidate the handle
+    auto clearDeletedAssets() -> auto;
+
+    auto inCache(const std::string& path) -> bool { return this->m_asset_cache.find(path) != this->m_asset_cache.end(); }    
 };
 } // namespace tmp
+
+auto readTextFileFromBinary(const std::string& path) -> tmp::TextFile;
+auto writeTextFileToBinary(const tmp::TextFile& file, const std::string& dest_path) -> void;
 #endif // MOLLY_ASSET_REGISTRY_H
