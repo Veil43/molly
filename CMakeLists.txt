@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE_DEBUG ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option (INCLUDE_GRAPHICS "Build with the grpahics portion" ON)
+
+if (INCLUDE_GRAPHICS)
+
 add_executable(molly src/main.cc 
     third-party/glad/src/glad.c
     src/glfw_platform.cc
@@ -44,6 +48,9 @@ target_link_libraries(molly PRIVATE glfw)
 add_subdirectory(third-party/glm)
 target_include_directories(molly PRIVATE third-party/glm)
 
+endif()
+
+
 # TESTING --------------------------------------------
 # Add Catch2
 add_subdirectory(third-party/Catch2)
@@ -57,9 +64,7 @@ add_executable(molly_tests
     src/context.cc) 
 
 # Link libs
-target_link_libraries(molly_tests PRIVATE OpenGL::GL)
 target_link_libraries(molly_tests PRIVATE Catch2::Catch2WithMain)
-target_link_libraries(molly_tests PRIVATE glfw)
 
 # Include headers
 target_include_directories(molly_tests PRIVATE third-party/glad/include)
