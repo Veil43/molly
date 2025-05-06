@@ -20,7 +20,8 @@ add_executable(molly src/main.cc
     src/texture.cc
     src/utils.cc
     src/glfw_utils.cc
-    src/asset_registry.cc)
+    src/asset_registry.cc
+    src/textfile.cc)
 
 # Define debug symbols
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -58,20 +59,29 @@ include(CTest)
 include(Catch)
 
 # create test target
-add_executable(molly_tests
-    tests/test_sample.cc
+add_executable(test_asset_registry
+    tests/test_asset_registry.cc
     src/asset_registry.cc
+    src/textfile.cc
     src/context.cc) 
-
+    
 # Link libs
-target_link_libraries(molly_tests PRIVATE Catch2::Catch2WithMain)
-
+target_link_libraries(test_asset_registry PRIVATE Catch2::Catch2WithMain)
+    
 # Include headers
-target_include_directories(molly_tests PRIVATE third-party/glad/include)
-target_include_directories(molly_tests PRIVATE third-party/stb)
-target_include_directories(molly_tests PRIVATE third-party/tiny_gltf)
-target_include_directories(molly_tests PRIVATE third-party/glm)
-target_include_directories(molly_tests PRIVATE src)
+target_include_directories(test_asset_registry PRIVATE third-party/glad/include)
+target_include_directories(test_asset_registry PRIVATE third-party/stb)
+target_include_directories(test_asset_registry PRIVATE third-party/tiny_gltf)
+target_include_directories(test_asset_registry PRIVATE third-party/glm)
+target_include_directories(test_asset_registry PRIVATE src)
+    
+add_executable(test_text_file
+    tests/test_textfile.cc
+    src/textfile.cc)
 
-catch_discover_tests(molly_tests)
+target_include_directories(test_text_file PRIVATE src)
+target_link_libraries(test_text_file PRIVATE Catch2::Catch2WithMain)
+
+catch_discover_tests(test_text_file)
+catch_discover_tests(test_asset_registry)
 enable_testing()

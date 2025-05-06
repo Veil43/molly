@@ -20,7 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
+        sudo apt-get update \
         sudo apt-get install -y \
         cmake \
         build-essential
@@ -28,8 +28,10 @@ jobs:
     - name: Configure project
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DINCLUDE_GRAPHICS=OFF
 
-    - name: Build test target
-      run: cmake --build build --target molly_tests
+    - name: Build test targets
+      run: |
+        cmake --build build --target test_asset_registry \
+        cmake --build build --target test_text_file
 
     - name: Run tests
       run: ctest --test-dir build --output-on-failure

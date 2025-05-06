@@ -5,9 +5,9 @@
 
 
 struct RendererContext {
-    tmp::AssetRegistry asset_registry;
+    AssetRegistry asset_registry;
 
-    void init();
+    void init(bool load_cache = true);
 
     // --------- Config goes here ------------
     const char* cache_dir = "cache/";

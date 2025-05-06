@@ -5,20 +5,29 @@
 #include <sstream>
 
 #include "types.h"
+#include "textfile.h"
 
-using namespace tmp;
+auto AssetRegistry::init(const std::string& cache_path, const std::string& asset_path, bool load_cache) -> bool {
+    this->cache_dir = cache_path;
+    this->asset_dir = asset_path;
+    
+    // init m_live_handles
+    // init m_free_handle_indices
+    // init m_free_handles
 
-std::string loadTextFile(const char* path) {
-    std::ifstream file(path);
+    this->m_free_handle_indices = std::vector<std::queue<u32>>{MOLLY_ASSET_TYPE_COUNT};
+    this->m_asset_cache = std::unordered_map<std::string, std::pair<std::string, u64>>{};
 
-    if (!file) {
-        std::cerr << "UTIL::IO: Could not open file: " << path << std::endl;
-        return "";
+    fs::create_directory(this->cache_dir);
+    fs::create_directory(this->asset_dir);
+
+    // Load the cache if it exists
+    if (load_cache) {        
+        auto cache_map = loadCache(this->cache_dir + "cache.bin");
+        this->m_asset_cache = cache_map;
     }
 
-    std::ostringstream text;
-    text << file.rdbuf();
-    return text.str();
+    return true; 
 }
 
 auto AssetRegistry::getTextFile(ARegHandle h) -> std::shared_ptr<TextFile> { 
@@ -30,37 +39,44 @@ auto AssetRegistry::getTextFile(ARegHandle h) -> std::shared_ptr<TextFile> {
     return std::make_shared<TextFile>(m_text_files[h.index()]); 
 }
 
-ARegHandle AssetRegistry::loadAsset(const std::string& path, u32 type, std::optional<std::string> name) {
-    ARegHandle handle = {};
+ARegHandle AssetRegistry::loadAsset(const std::string& path, u32 type, const std::string& name) {
     // TODO: Invalidate cache when path changes
     // periodically (maybe at delete calls) check for files and see if they have changed and invalidate the cache
 
     // NOTE: If we load an already loaded asset we will load from the binary format but we will not avoid in-memory duplication
     // NOTE: keeping track of a live handle + path might be useful to solve this problem
 
+    u64 mod_time = getFileModTime(path.c_str());
+
     if (this->inCache(path)) {
-        std::cout << "HERE!\n";
-        return this->readAssetFromBinary(this->m_asset_cache[path], type);
+        // TODO: Check for last date modified
+        std::cout << "Cahe Hit!\n";
+        
+        if (fs::exists(path) && mod_time <= this->m_asset_cache[path].second) {
+            return this->readAssetFromBinary(this->m_asset_cache[path].first, type);
+        } else {
+            std::cout << "Stale File: Erase!\n";
+            this->m_asset_cache.erase(path);
+        }
     }
 
+    ARegHandle handle = {};
     switch (type) {
         case MOLLY_ASSET_TEXT_FILE_TYPE: {
             std::string file_data = loadTextFile(path.c_str());
             TextFile file = {};
-            file.data = file_data;
-            
-            if (name) {
-                file.name = *name;
-            } else {
-                file.name = path;
+            if (file_data == "") {
+                return handle;
             }
-
+            file.content = file_data;
+            file.name = name;
             handle = this->storeAsset(std::move(file));
         } break;
     }
 
     std::string bin_path = this->writeAssetToBinary(handle);
-    this->m_asset_cache[path] = bin_path; // NOTE: maybe we could store the handle also
+    this->m_asset_cache[path].first = bin_path; // NOTE: maybe we could store the handle also
+    this->m_asset_cache[path].second = mod_time;
     return handle;
 }
 
@@ -117,7 +133,7 @@ auto AssetRegistry::writeAssetToBinary(ARegHandle h) -> std::string {
 }
 
 auto AssetRegistry::readAssetFromBinary(const std::string& path, u32 type) -> ARegHandle {
-    
+
     switch(type) {
         case MOLLY_ASSET_TEXT_FILE_TYPE: {
             TextFile file = readTextFileFromBinary(path);
@@ -128,6 +144,9 @@ auto AssetRegistry::readAssetFromBinary(const std::string& path, u32 type) -> AR
     return {};
 }
 
+/*
+    [count][[size]raw_path][[size](bin_path),[size](last_store)]
+*/
 auto AssetRegistry::storeCache(const std::string& dest) -> void {
     std::ofstream output_file(dest, std::ios::binary);
 
@@ -135,23 +154,30 @@ auto AssetRegistry::storeCache(const std::string& dest) -> void {
         std::cerr << "ERROR: Could not store cache to path: " << dest << std::endl;
         return;
     }
-    
+
     size_t size = this->m_asset_cache.size();
     output_file.write(reinterpret_cast<const char*>(&size), sizeof(size));
     for (const auto& [key, value] : this->m_asset_cache) {
         size_t key_size = key.size();
-        size_t value_size = value.size();
+        size_t value_size1 = value.first.size();
+        size_t value_size2 = sizeof(value.second);
+        u64 last_mod_time = getFileModTime(value.first.c_str());
 
         output_file.write(reinterpret_cast<const char*>(&key_size), sizeof(key_size));
         output_file.write(key.data(), key_size);
-        output_file.write(reinterpret_cast<const char*>(&value_size), sizeof(value_size));
-        output_file.write(value.data(), value_size);
+        output_file.write(reinterpret_cast<const char*>(&value_size1), sizeof(value_size1));
+        output_file.write(value.first.data(), value_size1);
+        output_file.write(reinterpret_cast<const char*>(&value_size2), sizeof(value_size2));
+        output_file.write(reinterpret_cast<const char*>(&last_mod_time), value_size2);
     }
 }
 
-auto AssetRegistry::loadCache(const std::string& src) -> std::unordered_map<std::string, std::string> {
+/*
+    [count][[size]raw_path][[size](bin_path),[size](last_store)]
+*/
+auto AssetRegistry::loadCache(const std::string& src) -> std::unordered_map<std::string, std::pair<std::string, u64>> {
     std::ifstream input_file(src, std::ios::binary);
-    std::unordered_map<std::string, std::string> output{};
+    std::unordered_map<std::string, std::pair<std::string, u64>> output{};
 
     if (!input_file.is_open()) {
         std::cerr << "Warning: Could not load cache from path: " << src << std::endl;
@@ -160,67 +186,29 @@ auto AssetRegistry::loadCache(const std::string& src) -> std::unordered_map<std:
 
     size_t size;
     input_file.read(reinterpret_cast<char*>(&size), sizeof(size));
-    
+
     for (size_t i = 0; i < size; i++) {
         size_t key_size;
-        size_t value_size;
+        size_t value_size1;
+        size_t value_size2;
 
         input_file.read(reinterpret_cast<char*>(&key_size), sizeof(key_size));
         std::string key(key_size, '\0'); // fill it with null
         input_file.read(&key[0], key_size);
 
-        input_file.read(reinterpret_cast<char*>(&value_size), sizeof(value_size));
-        std::string value(value_size, '\0');
-        input_file.read(&value[0], value_size);
+        input_file.read(reinterpret_cast<char*>(&value_size1), sizeof(value_size1));
+        std::string value1(value_size1, '\0');
+        input_file.read(&value1[0], value_size1);
 
-        output[key] = value;
+        input_file.read(reinterpret_cast<char*>(&value_size2), sizeof(value_size2));
+        u64 value2;
+        input_file.read(reinterpret_cast<char*>(&value2), value_size2);
+        
+        output[key].first = value1;
+        output[key].second = value2;
     }
 
-    return output;
+    return std::move(output);
 }
 
 // --------------------------- NON ASSET REGISTRY FUNCTIONS ------------------------------------
-auto writeTextFileToBinary(const tmp::TextFile& file, const std::string& dest_path) -> void {
-    std::ofstream bin(dest_path, std::ios::binary);
-    if (!bin.is_open()) {
-        std::cerr << "ERROR: Could not write asset: " << file.name << " to binary at: " << dest_path << std::endl;;
-        return;
-    }
-
-    size_t name_size = file.name.size();
-    size_t content_size = file.data.size();
-
-    bin.write(reinterpret_cast<const char*>(&name_size), sizeof(name_size));
-    bin.write(file.name.data(), name_size);
-    bin.write(reinterpret_cast<const char*>(&content_size), sizeof(content_size));
-    bin.write(file.data.data(), content_size);
-}
-
-auto readTextFileFromBinary(const std::string& path) -> tmp::TextFile {
-    TextFile text_file = {};
-            
-    // NOTE: The hope here is that loading a whole chunk is faster than line by line
-    // TODO: Test to see if this is actually faster
-    std::ifstream asset_file(path, std::ios::binary);
-    if (!asset_file.is_open()) {
-        std::cerr << "ERROR: could not load: " << path << " from binary.\n";
-        return text_file;
-    }
-
-    size_t name_size;
-    size_t content_size;
-
-    asset_file.read(reinterpret_cast<char*>(&name_size), sizeof(name_size));
-    std::string name(name_size, '\0');
-    asset_file.read(name.data(), name_size);
-
-    asset_file.read(reinterpret_cast<char*>(&content_size), sizeof(content_size));
-    std::string content(content_size, '\0');
-    asset_file.read(content.data(), content_size);    
-    
-    // TODO: check total file size
-    text_file.name = std::move(name);
-    text_file.data = std::move(content);
-
-    return std::move(text_file);
-}

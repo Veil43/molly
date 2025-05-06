@@ -14,7 +14,7 @@
         std::ostringstream oss;                                                             \
         oss << "ERROR::OPENGL: 0x" << std::hex << err__ << std::dec                         \
             << " in file: " << __FILE__ << " at line: " << __LINE__;                        \
-        molly::log(oss.str());                                                                \
+        molly::log(oss.str());                                                              \
         DEBUG_BREAK                                                                         \
     }
 
