@@ -20,9 +20,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get update \
-        sudo apt-get install -y \
-        cmake \
+        sudo apt-get update
+        sudo apt-get install -y
+        cmake
         build-essential
     
     - name: Configure project
@@ -30,7 +30,7 @@ jobs:
 
     - name: Build test targets
       run: |
-        cmake --build build --target test_asset_registry \
+        cmake --build build --target test_asset_registry
         cmake --build build --target test_text_file
 
     - name: Run tests
