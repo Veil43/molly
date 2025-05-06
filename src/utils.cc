@@ -223,10 +223,10 @@ molly::TextureInfo GLTFGetTextureData(gltf::Texture* texture, gltf::Model* model
     // check for negatives -1
     if (texture->sampler >= 0) {
         const gltf::Sampler& sampler = model->samplers[texture->sampler];
-        result.filter_wrap_config.min_filter = GLTFToMollyConfigConvert(sampler.minFilter);
-        result.filter_wrap_config.mag_filter = GLTFToMollyConfigConvert(sampler.magFilter);
-        result.filter_wrap_config.wrap_s = GLTFToMollyConfigConvert(sampler.wrapS);
-        result.filter_wrap_config.wrap_t = GLTFToMollyConfigConvert(sampler.wrapT);
+        result.filter_wrap_config.min_filter = (sampler.minFilter);
+        result.filter_wrap_config.mag_filter = (sampler.magFilter);
+        result.filter_wrap_config.wrap_s = (sampler.wrapS);
+        result.filter_wrap_config.wrap_t = (sampler.wrapT);
     }
 
     if (texture->source >= 0) {

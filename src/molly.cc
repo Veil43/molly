@@ -20,208 +20,6 @@
 #include "light.h"
 // #include "context.h"
 
-static f32 vertices[] = {
-     0.5f,  0.5f, 0.0f,    1.0f, 1.0f,    1.0f, 0.0f, 0.0f,
-    -0.5f,  0.5f, 0.0f,    0.0f, 1.0f,    0.0f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.0f,    0.0f, 0.0f,    0.0f, 0.0f, 1.0f,
-     0.5f, -0.5f, 0.0f,    1.0f, 0.0f,    1.0f, 1.0f, 1.0f,
-};
-
-static u32 indices[] = {
-    0, 1, 2,
-    0, 2, 3
-};
-
-static f32 square_vertices[] = {
-     // positions           // normals           // uvs
-    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,   0.0f, 0.0f, -1.0f,   0.0f, 0.0f,
-    
-    -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,   0.0f, 0.0f,  1.0f,   0.0f, 0.0f,
-    
-    -0.5f,  0.5f,  0.5f,   -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,   -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,   -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,   -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,   -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,   -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,   0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,   1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,   1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,   0.0f, -1.0f, 0.0f,   0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,   0.0f, -1.0f, 0.0f,   0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,   0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,   1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,   0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,   0.0f, 1.0f,
-};
-
-static const u32 kPositionIndex = 0;
-static const u32 kNormalIndex = 1;
-static const u32 kTexCoordIndex = 2;
-
-static u32 basic_shader_id = 0;
-static u32 triangle_vao = 0;
-
-/*
-    DO NOT USE ME!
-    I BROKEY!!
-*/
-static void sampleOpenGLProgram() {
-    // Data ----------
-    u32 vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
-    u32 vbo;
-    u32 ebo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), (void*)vertices, GL_STATIC_DRAW);
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), (void*)indices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-
-    // TODO: Shader ----------
-    const char* vertex_source =
-    "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec2 aTexCoord;\n"
-    "layout (location = 2) in vec3 aCol;\n"
-    "\n"
-    "out vec3 vertex_color;\n"
-    "out vec2 tex_coord;\n"
-    "\n"
-    "void main() {\n"
-    "   gl_Position = vec4(aPos, 1.0);\n"
-    "   vertex_color = aCol;\n"
-    "   tex_coord = aTexCoord;\n"
-    "}\n"
-    "";
-
-    const char* fragment_source =
-    "#version 330 core\n"
-    "out vec4 frag_color;\n"
-    "\n"
-    "in vec3 vertex_color;\n"
-    "in vec2 tex_coord;\n"
-    "\n"
-    "uniform sampler2D texture1;"
-    "\n"
-    "void main() {\n"
-    "   frag_color = vec4(vertex_color, 1.0f) * texture(texture1, tex_coord);\n"
-    "}\n"
-    "";
-
-    u32 vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    u32 fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vertex_shader, 1, &vertex_source, NULL);
-    glShaderSource(fragment_shader, 1, &fragment_source, NULL);
-
-    glCompileShader(vertex_shader);
-    int success;
-    char info_log[512];
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertex_shader, 512, NULL, info_log);
-        // TODO: Have a printing function that prints things to the screen
-        std::cerr << "ERROR::SHADER::VERTEX::FAILED_TO_COMPILE: " 
-        << info_log << std::endl;
-    }
-
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragment_shader, 512, NULL, info_log);
-        // TODO: Have a printing function that prints things to the screen
-        std::cerr << "ERROR::SHADER::FRAGMENT::FAILED_TO_COMPILE: " 
-        << info_log << std::endl;
-    }
-
-    u32 shader_program = glCreateProgram();
-    glAttachShader(shader_program, vertex_shader);
-    glAttachShader(shader_program, fragment_shader);
-    glLinkProgram(shader_program);
-
-    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shader_program, 512, NULL, info_log);
-        // TODO: Have a printing function that prints things to the screen
-        std::cerr << "ERROR::SHADER::FAILED_TO_COPILE: " 
-        << info_log << std::endl;
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
-
-    triangle_vao = vao;
-    basic_shader_id = shader_program;
-    
-    // Texture ----------
-    u32 texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    // Load data 
-    // if data do else NO!
-    std::string texture_path = "../data/container.png";
-    int width, height, channel_count;
-    u8* data;
-    data = nullptr;
-#ifdef STBI_INCLUDE_STB_IMAGE_H
-    data = stbi_load(texture_path.c_str(), &width, &height, &channel_count, 0);
-#endif
-    if (!data) {
-        std::cerr << "ERROR::IO::STB: Could not load file: " << texture_path; 
-    } else  {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-    u32 texture_unit = 0;
-    glUseProgram(basic_shader_id);
-    glUniform1i(glGetUniformLocation(basic_shader_id, "texture1"), texture_unit);
-    glActiveTexture(GL_TEXTURE0 + texture_unit);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glUseProgram(0);
-}
-
 static StaticMesh cube{};
 static std::vector<StaticMesh> backpack{};
 
@@ -233,52 +31,11 @@ static Camera cam{};
 static u32* texture_handles;
 static std::vector<molly::MaterialData> s_materials;
 
-u32 convertTextureConfigOption(u32 option) {
-    switch (static_cast<molly::eTextureConfigOptions>(option)) {
-        case molly::eTextureConfigOptions::kTextureFilterNearest: {
-            return GL_NEAREST;
-        } break;
-        case molly::eTextureConfigOptions::kTextureFilterLinear: {
-            return GL_LINEAR;
-        } break;
-        case molly::eTextureConfigOptions::kTextureFilterNearestMipmapNearest: {
-            return GL_NEAREST_MIPMAP_NEAREST;
-        } break;
-        case molly::eTextureConfigOptions::kTextureFilterLinearMipmapNearest: {
-            return GL_LINEAR_MIPMAP_NEAREST;
-        } break;
-        case molly::eTextureConfigOptions::kTextureFilterNearestMipmapLinear: {
-            return GL_NEAREST_MIPMAP_LINEAR;
-        } break;
-        case molly::eTextureConfigOptions::kTextureFilterLinearMipmapLinear: {
-            return GL_LINEAR_MIPMAP_LINEAR;
-        } break;
-        case molly::eTextureConfigOptions::kTextureWrapRepeat: {
-            return GL_REPEAT;
-        } break;
-        case molly::eTextureConfigOptions::kTextureWrapClampToEdge: {
-            return GL_CLAMP_TO_EDGE;
-        } break;
-        case molly::eTextureConfigOptions::kTextureWrapMirroredRepeat: {
-            return GL_MIRRORED_REPEAT;
-        } break;
-        case molly::eTextureConfigOptions::kError: {
-            molly::log("ERROR::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
-            return 0;
-        } break;
-
-        default: {
-            molly::log("ERROR???::TEXTURE_CONFIG::CONVERSION: Invalid texure config");
-            return 0;
-        }
-    }
-}
-
 void configureTexture(const molly::TextureConfig& config) {
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, convertTextureConfigOption(config.min_filter));)
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, convertTextureConfigOption(config.mag_filter));)
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, convertTextureConfigOption(config.wrap_s));)
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, convertTextureConfigOption(config.wrap_t));)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, config.min_filter);)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, config.mag_filter);)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, config.wrap_s);)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, config.wrap_t);)
 }
 
 // to be called at runtime (I think)
@@ -338,7 +95,8 @@ void mollyToyOnStartupCall(f32 aspect_ratio) {
     // We will need a globally available context for the renderer
     // g_context.asset_registry;
 
-    molly::ModelData backpack_model = molly::loadModel("../data/survival_guitar_backpack/scene.gltf");
+    // survival_guitar_backpack
+    molly::ModelData backpack_model = molly::loadModel("../data/teapot/scene.gltf");
     texture_handles = new u32[backpack_model.images.size()];
     glGenTextures(backpack_model.images.size(), texture_handles);
     s_materials = backpack_model.materials;
@@ -365,9 +123,8 @@ void mollyToyOnStartupCall(f32 aspect_ratio) {
     }
 
     molly::printGLInfo();
-    cube = StaticMesh((Vertex*)square_vertices, nullptr, 36, 0);
     // shader = Shader("../src/shaders/vsample.glsl", "../src/shaders/fsample.glsl");
-    shader = Shader("../src/shaders/vno_mat.glsl", "../src/shaders/fno_mat.glsl");
+    shader = Shader("../src/shaders/vphong.glsl", "../src/shaders/fphong.glsl");
     container_diffuse_map = Texture("../data/container.png");
     container_specular_map= Texture("../data/container_specular.png");
 
@@ -389,49 +146,21 @@ void mollyToyOnStartupCall(f32 aspect_ratio) {
     cam.m_movement_speed = 100.0f;
 
     cam.m_aspect_ratio = aspect_ratio;
-#ifdef GIMP
-    glm::mat4 view = cam.getViewMatrix();
-    glm::mat4 projection = cam.getProjectionMatrix();
-
     PointLight point_light1 = {};
-    point_light1.position = glm::vec3(1.0f);
+    point_light1.position = glm::vec3(200.0f);
     point_light1.attenuation = glm::vec3(1.0f, 0.09f, 0.032f);
     point_light1.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
     point_light1.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
     point_light1.specular = glm::vec3(1.0f);
 
-    SpotLight spot_light1 = {};
-    spot_light1.position = glm::vec3(0.0f, 0.0f, 0.4f);
-    spot_light1.direction = -spot_light1.position;
-    spot_light1.attenuation = glm::vec3(1.0f, 0.009f, 0.0075f);
-    spot_light1.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
-    spot_light1.diffuse = glm::vec3(0.5f, 0.5f, 0.5f);
-    spot_light1.specular = glm::vec3(1.0f);
-    spot_light1.cutoff = glm::cos(glm::radians(12.5f));
-    spot_light1.outer_cutoff = glm::cos(glm::radians(17.5f));
-
     shader.bind();
     shader.setVec3f("camera_position", cam.m_position);
-
-    shader.setMat4f("model", model);
-    shader.setMat4f("view", view);
-    shader.setMat4f("projection", projection);
     shader.setVec3f("point_light1.position", point_light1.position);
     shader.setVec3f("point_light1.attenuation", point_light1.position);
     shader.setVec3f("point_light1.ambient", point_light1.ambient);
     shader.setVec3f("point_light1.diffuse", point_light1.diffuse);
     shader.setVec3f("point_light1.specular", point_light1.specular);
-
-    shader.setVec3f("spot_light1.position", spot_light1.position);
-    shader.setVec3f("spot_light1.direction", spot_light1.direction);
-    shader.setVec3f("spot_light1.attenuation", spot_light1.attenuation);
-    shader.setVec3f("spot_light1.ambient", spot_light1.ambient);
-    shader.setVec3f("spot_light1.diffuse", spot_light1.diffuse);
-    shader.setVec3f("spot_light1.specular", spot_light1.specular);
-    shader.setFloat("spot_light1.cutoff", spot_light1.cutoff);
-    shader.setFloat("spot_light1.outer_cutoff", spot_light1.outer_cutoff);
     shader.unbind();
-#endif
 }
 
 std::vector<glm::vec3> container_positions = {
@@ -447,16 +176,21 @@ std::vector<glm::vec3> container_positions = {
     glm::vec3(-1.3f, 1.0f, -1.5f)
 };
 
-void renderBackPack() {
+void render3DObject(f64 dt) {
     glm::mat4 view = cam.getViewMatrix();
     glm::mat4 projection = cam.getProjectionMatrix();
-    
+    f32 rotate_speed = 1.0e1f;
+
     shader.bind();
     shader.setMat4f("view", view);
     shader.setMat4f("projection", projection);    
+    shader.setVec3f("camera_position", cam.m_position);
 
+    f64 angle = static_cast<f64>(glm::radians(GLFWGetTime()));
+    angle *= rotate_speed;
     for (auto& mesh : backpack) {
         glm::mat4 model = mesh.m_transform;
+        model = glm::rotate(model, (f32)(angle), glm::vec3(0.0f, 1.0f, 0.0f));
         const molly::MaterialData& mesh_mat = s_materials[mesh.m_material_index]; 
         
         setMaterial(shader, mesh_mat);
@@ -495,28 +229,8 @@ void mollyToyRenderLoop(f64 delta_time, PlatformInput input) {
     f32 rot_angle = static_cast<f32>(glm::radians(platformGetTime())) * 30;
     model = glm::rotate(model, rot_angle, glm::vec3(1.0f));
 
-    renderBackPack();
-#ifdef GIMP
-    cube.bind();
-    shader.bind();
-    // shader.setMat4f("model", model);
-    shader.setVec3f("camera_position", cam.m_position);
-    shader.setVec3f("spot_light1.position", cam.m_position);
-    shader.setVec3f("spot_light1.direction", cam.m_lookat);
+    render3DObject(delta_time);
 
-    shader.setMat4f("view", view);
-    shader.setMat4f("projection", projection);
-
-    for (auto& pos : container_positions) {
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, pos);
-        shader.setMat4f("model", model);
-        cube.draw();
-    }
-
-    cube.unbind();
-    shader.unbind();
-#endif
     // Timing Information --------------------------------------------------
 #ifdef MOLLY_DEBUG
     static u32 frame_count = 0;
