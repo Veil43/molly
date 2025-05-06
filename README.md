@@ -9,3 +9,5 @@ I am in the process of implementing a lightweight asset manager and caching syst
 
 <img src="data/golden_teapot.gif/" width="50%">
 
+### Build instructions
+The project is currently too unsteable for me to reliably list instruction for building on other machines.

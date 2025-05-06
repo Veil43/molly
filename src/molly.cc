@@ -40,24 +40,11 @@ void configureTexture(const molly::TextureConfig& config) {
 
 // to be called at runtime (I think)
 void setMaterial(const Shader& shader, const molly::MaterialData& mat) {
-    // struct MaterialData {
-    //     TextureInfo base_color;
-    //     TextureInfo metallic_roughness;
-    //     TextureInfo normal;
-    //     // Currently not supported
-    //     TextureInfo emissive; 
-    //     // Currently not supported
-    //     TextureInfo occlusion;
-    //     glm::vec4 base_color_factor;
-    //     float metallic_factor;
-    //     float roughness_factor;
-    // };
     // #define MOLLY_DIFFUSE_MAP_TEXTURE_UNIT            (0)
     // #define MOLLY_SPECULAR_MAP_TEXTURE_UNIT           (1)
     // #define MOLLY_METALLIC_ROUGHNESS_MAP_TEXTURE_UNIT (2)
     // #define MOLLY_NORMAL_MAP_TEXTURE_UNIT             (3)
 
-    // shader.bind();
     // -------------- vecn + scalar values -----------------
     shader.setVec4f("pbr_material.diffuse_color_factor", mat.base_color_factor);
     shader.setFloat("pbr_material.metallic_factor", mat.metallic_factor);
@@ -82,7 +69,6 @@ void setMaterial(const Shader& shader, const molly::MaterialData& mat) {
     shader.setInt("pbr_material.normal_map", MOLLY_NORMAL_MAP_TEXTURE_UNIT);
     // shader.setInt("pbr_material.emissive_map", mat.normal.image_index);
     // shader.setInt("pbr_material.occlusion_map", mat.normal.image_index);
-    // shader.unbind();
 }
 
 void mollyToyOnStartupCall(f32 aspect_ratio) {
@@ -162,19 +148,6 @@ void mollyToyOnStartupCall(f32 aspect_ratio) {
     shader.setVec3f("point_light1.specular", point_light1.specular);
     shader.unbind();
 }
-
-std::vector<glm::vec3> container_positions = {
-    glm::vec3(0.0f, 0.0f, 0.0f),
-    glm::vec3( 2.0f, 5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f, 3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f, 2.0f, -2.5f),
-    glm::vec3( 1.5f, 0.2f, -1.5f),
-    glm::vec3(-1.3f, 1.0f, -1.5f)
-};
 
 void render3DObject(f64 dt) {
     glm::mat4 view = cam.getViewMatrix();
