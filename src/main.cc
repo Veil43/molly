@@ -2,6 +2,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include "molly_services.h"
 
@@ -57,21 +60,48 @@ int main() {
     // glfwSetFramebufferSizeCallback(window_handle);
     glfwSetScrollCallback(window_handle, glfw_scroll_callback);
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark(); // Optional: style
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup platform/renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(window_handle, true);
+    ImGui_ImplOpenGL3_Init("#version 330"); // Or "#version 410", etc.
+
+    // -----------------------------------------------------------------------------
     // Call application startup code
+    // -----------------------------------------------------------------------------
     molly_on_startup_call(c_window_width/c_window_height);
 
     PlatformInput old_input = {};
     while(!glfwWindowShouldClose(window_handle)) {
         glfwPollEvents();
         
-        // Call application looping code ----------
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // -----------------------------------------------------------------------
+        // Call application looping code
+        // -----------------------------------------------------------------------
         PlatformInput new_input = process_input(window_handle, old_input);
         old_input = new_input;
         molly_render_loop(new_input);
 
+        // ImGui rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window_handle);
     }
-   
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwDestroyWindow(window_handle);
     glfwTerminate();
     return 0;
@@ -162,3 +192,7 @@ void platform_enable_mouse_cursor(void* platformWindow) {
 void platform_request_quit() {
     glfwSetWindowShouldClose(sg_window_handle, GLFW_TRUE);   
 }
+
+// --------------------------------------------------------------------------------
+//
+// --------------------------------------------------------------------------------

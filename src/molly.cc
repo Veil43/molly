@@ -27,6 +27,10 @@ updates and queries: Global state
 #include "camera.h"
 #include "model.h"
 
+#include "imgui.h"
+// #include "imgui_impl_glfw.h"
+// #include "imgui_impl_opengl3.h"
+
 #include "molly.h"
 
 static ModelHandle face{};
@@ -96,24 +100,39 @@ void molly_render_loop(PlatformInput input) {
     draw_model(face, shader);
     shader.unbind();
     
+    // LOG
+    ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
+    draw_list->AddText(ImVec2(10, 10), IM_COL32(255, 255, 0, 255), "Hello from the top-left!");
+
+
     // Timing Information --------------------------------------------------
 #ifdef MOLLY_DEBUG
-    static u32 frame_count = 0;
-    static f64 time_accumilator = 0.0;
-    static u32 old_fps = 0;
-    u32 fps = old_fps;
+    ImGui::Begin("Debug Window");
 
-    time_accumilator += delta_time;
-    frame_count += 1;
-    if (time_accumilator >= 1.0) {
-        fps = static_cast<u32>(frame_count / time_accumilator);
-        old_fps = fps;
-        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps) 
-        + " | Primitive Count: " + std::to_string(/*backpack.size()*/0);
-        molly::log(timing);
-        time_accumilator = 0.0;
-        frame_count = 0;
-    }
+    ImGui::Text("Delta Time: %.3f ms", delta_time * 1000.0);
+    ImGui::Text("FPS: %d", (int)(1.0 / delta_time));
+
+    // You can add checkboxes, sliders, etc. too
+    // ImGui::Checkbox("Wireframe Mode", &some_debug_bool);
+
+    ImGui::End();
+
+    // static u32 frame_count = 0;
+    // static f64 time_accumilator = 0.0;
+    // static u32 old_fps = 0;
+    // u32 fps = old_fps;
+
+    // time_accumilator += delta_time;
+    // frame_count += 1;
+    // if (time_accumilator >= 1.0) {
+    //     fps = static_cast<u32>(frame_count / time_accumilator);
+    //     old_fps = fps;
+    //     std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps) 
+    //     + " | Primitive Count: " + std::to_string(/*backpack.size()*/0);
+    //     molly::log(timing);
+    //     time_accumilator = 0.0;
+    //     frame_count = 0;
+    // }
 #endif
 }
 

@@ -6,10 +6,35 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE_DEBUG ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# symbols
 option (INCLUDE_GRAPHICS "Build with the grpahics portion" ON)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DMOLLY_DEBUG)
+endif()
 
 if (INCLUDE_GRAPHICS)
 
+# get the source an libraries
+find_package(OpenGL REQUIRED)
+add_subdirectory(third-party/glfw)
+add_subdirectory(third-party/glm)
+
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/third-party/imgui)
+set(IMGUI_SOURCE
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp)
+
+add_library(imgui STATIC ${IMGUI_SOURCE})
+target_include_directories(imgui PUBLIC 
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    third-party/glfw/include)
+
+#.exe
 add_executable(molly src/main.cc 
     third-party/glad/src/glad.c
     src/molly.cc
@@ -18,30 +43,14 @@ add_executable(molly src/main.cc
     src/utils.cc
     src/model.cc)
 
-# Define debug symbols
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DMOLLY_DEBUG)
-endif()
-
-# Add glad headers
-target_include_directories(molly PRIVATE third-party/glad/include)
-
-# Add stb headers
-target_include_directories(molly PRIVATE third-party/stb)
-
-# Add tiny_gltf headers
-# target_include_directories(molly PRIVATE third-party/tiny_gltf)
-
-# Add the OpenGL dlls
-find_package(OpenGL REQUIRED)
+# link
+target_link_libraries(molly PRIVATE imgui)
+target_link_libraries(molly PRIVATE glfw)
 target_link_libraries(molly PRIVATE OpenGL::GL)
 
-# Add glfw to the project
-add_subdirectory(third-party/glfw)
-target_link_libraries(molly PRIVATE glfw)
-
-# Add glm
-add_subdirectory(third-party/glm)
+# headers
+target_include_directories(molly PRIVATE third-party/glad/include)
+target_include_directories(molly PRIVATE third-party/stb)
 target_include_directories(molly PRIVATE third-party/glm)
 
 endif()
