@@ -2,7 +2,7 @@
 .vscode
 build
 assets
-.cache
+.cache/clangd/index/*
 cache
 cmake-build-debug-visual-studio
 .idea

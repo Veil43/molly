@@ -16,10 +16,11 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 
 #include "types.h"
 
-std::string molly::loadTextFile(const char* path) {
+std::string molly::load_text_file(const char* path) {
     std::ifstream file(path);
 
     if (!file) {
@@ -36,7 +37,7 @@ void molly::log(const std::string& message) {
     std::cerr << message << std::endl;
 }
 
-void molly::printGLInfo() {
+void molly::print_GL_info() {
     GL_QUERY_ERROR(const char* version = (char*)glGetString(GL_VERSION);)
     GL_QUERY_ERROR(const char* vendor = (char*)glGetString(GL_VENDOR);)
     GL_QUERY_ERROR(const char* renderer = (char*)glGetString(GL_RENDERER);)
@@ -69,7 +70,7 @@ void molly::printGLInfo() {
 
 }
 
-molly::ImageData molly::loadImageFile(const char* path, bool flip) {
+molly::ImageData molly::load_image_file(const char* path, bool flip) {
     molly::ImageData result = {};
     int x = 0;
     int y = 0;
@@ -92,7 +93,7 @@ molly::ImageData molly::loadImageFile(const char* path, bool flip) {
     return std::move(result);
 }
 
-void molly::freeImageData(ImageData* img) {
+void molly::free_image_data(ImageData* img) {
     if (!img || !img->data)
         return;
  
@@ -111,9 +112,6 @@ std::string molly::repeat(const std::string& str, int n) {
     }
     return tmp;
 }
-
-#include <filesystem>
-
 
 std::string molly::resolve_path(const std::string& path) {
     namespace fs = std::filesystem;
@@ -151,12 +149,11 @@ unsigned int molly::load_image_to_opengl(ImageData& image, unsigned int texture_
     }
 
     GL_QUERY_ERROR(glGenTextures(1, &texture);)
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + texture_unit);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture);)
 
     GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.data);)
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + texture_unit);)
     GL_QUERY_ERROR(glGenerateMipmap(GL_TEXTURE_2D);)
-    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture);)
 
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);)
@@ -165,5 +162,3 @@ unsigned int molly::load_image_to_opengl(ImageData& image, unsigned int texture_
 
     return texture;
 }
-
-

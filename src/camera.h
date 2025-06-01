@@ -17,7 +17,6 @@ public:
     static constexpr f32       kDefaultNearDistance         = 0.1f;
     static constexpr f32       kDefaultFarDistance          = 100.0f;
     static constexpr f32       kDefaultAspectRatio          = 1.0f;
-    // static constexpr glm::vec3 kDefaultLookAt  = glm::vec3(0.0f, 0.0f, -1.0f);
 
 public:
     glm::vec3 m_position;
@@ -53,14 +52,14 @@ public:
     Camera(Camera&&) =delete;
     Camera& operator=(Camera&&) =delete;
 
-    glm::mat4 getViewMatrix() const;
-    glm::mat4 getProjectionMatrix() const;
-    void processMovementInput(molly::eMovement direction, f32 delta_time);
+    glm::mat4 get_view_matrix() const;
+    glm::mat4 get_projection_matrix() const;
+    void process_movement_input(molly::eMovement direction, f32 delta_time);
 
-    void processMouseMovementInput(f32 xoffset, f32 yoffset, f32 delta_time);
-    void processMouseScrollInput(f32 yoffset);
+    void process_mouse_movement_input(f32 xoffset, f32 yoffset, f32 delta_time);
+    void process_mouse_scroll_input(f32 yoffset);
 
-    void updateCameraVectors();
+    void update_camera_vectors();
 };
 
 #endif // MOLLY_CAMERA_H

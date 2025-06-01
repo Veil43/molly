@@ -16,7 +16,8 @@
     @param shader_source
     The string containing the source code of the shader to be compiled.
 */
-int compileShader(u32 shader_id, u32 shader_type, const char* shader_source) {
+static int 
+compile_shader(u32 shader_id, u32 shader_type, const char* shader_source) {
     GL_QUERY_ERROR(glShaderSource(shader_id, 1, &shader_source, NULL);)
     GL_QUERY_ERROR(glCompileShader(shader_id);)
     int success;
@@ -36,12 +37,12 @@ Shader::Shader() noexcept
 {}
 
 Shader::Shader(const char* vpath, const char* fpath) {
-    const std::string vsource = molly::loadTextFile(vpath);
-    const std::string fsource = molly::loadTextFile(fpath);
+    const std::string vsource = molly::load_text_file(vpath);
+    const std::string fsource = molly::load_text_file(fpath);
     GL_QUERY_ERROR(u32 vshader = glCreateShader(GL_VERTEX_SHADER);)
     GL_QUERY_ERROR(u32 fshader = glCreateShader(GL_FRAGMENT_SHADER);)
-    compileShader(vshader, 0, vsource.c_str());
-    compileShader(fshader, 1, fsource.c_str());
+    compile_shader(vshader, 0, vsource.c_str());
+    compile_shader(fshader, 1, fsource.c_str());
     GL_QUERY_ERROR(this->m_id = glCreateProgram();)
     GL_QUERY_ERROR(glAttachShader(this->m_id, vshader);)
     GL_QUERY_ERROR(glAttachShader(this->m_id, fshader);)
@@ -79,35 +80,34 @@ Shader::~Shader() {
     }
 }
 
-void Shader::setInt(const std::string& name, i32 value) const {
+void Shader::set_int(const std::string& name, i32 value) const {
     GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
     GL_QUERY_ERROR(glUniform1i(location, value);)
 }
 
-void Shader::setBool(const std::string& name, i32 value) const {
-    this->setInt(name, value);
+void Shader::set_bool(const std::string& name, i32 value) const {
+    this->set_int(name, value);
 }
 
-void Shader::setFloat(const std::string& name, f32 value) const {
+void Shader::set_float(const std::string& name, f32 value) const {
     GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
     GL_QUERY_ERROR(glUniform1f(location, value);)
 }
 
-void Shader::setMat4f(const std::string& name, const glm::mat4 value) const {
+void Shader::set_mat4f(const std::string& name, const glm::mat4 value) const {
     GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
     GL_QUERY_ERROR(glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));)
 }
 
-void Shader::setVec3f(const std::string& name, const glm::vec3 value) const  {
+void Shader::set_vec3f(const std::string& name, const glm::vec3 value) const  {
     GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
     GL_QUERY_ERROR(glUniform3fv(location, 1, glm::value_ptr(value));)
 }
 
-void Shader::setVec4f(const std::string& name, const glm::vec4 value) const  {
+void Shader::set_vec4f(const std::string& name, const glm::vec4 value) const  {
     GL_QUERY_ERROR(i32 location = glGetUniformLocation(this->m_id, name.c_str());)
     GL_QUERY_ERROR(glUniform3fv(location, 1, glm::value_ptr(value));)
 }
-
 
 void Shader::bind() const {
     GL_QUERY_ERROR(glUseProgram(m_id);)

@@ -19,13 +19,13 @@ public:
 
     ~Shader();
 
-    void setInt(const std::string& name, i32 value) const ;
-    void setFloat(const std::string& name, f32 value) const ;
-    void setBool(const std::string& name, i32 value) const ;
+    void set_int(const std::string& name, i32 value) const ;
+    void set_float(const std::string& name, f32 value) const ;
+    void set_bool(const std::string& name, i32 value) const ;
 
-    void setMat4f(const std::string& name, const glm::mat4 value) const ;
-    void setVec3f(const std::string& name, const glm::vec3 value) const ;
-    void setVec4f(const std::string& name, const glm::vec4 value) const ;
+    void set_mat4f(const std::string& name, const glm::mat4 value) const ;
+    void set_vec3f(const std::string& name, const glm::vec3 value) const ;
+    void set_vec4f(const std::string& name, const glm::vec4 value) const ;
 
     void bind() const;
     void unbind() const;

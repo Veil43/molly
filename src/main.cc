@@ -1,4 +1,3 @@
-#define MOLY_IMPLEMENTS_PLATFORM
 #include <iostream>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -11,7 +10,7 @@
 #define WINDOW_TITLE "OpenGL with Molly"
 
 static PlatformInput 
-processInput(GLFWwindow* w, PlatformInput old_input);
+process_input(GLFWwindow* w, PlatformInput old_input);
 static void 
 glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -59,33 +58,18 @@ int main() {
     glfwSetScrollCallback(window_handle, glfw_scroll_callback);
 
     // Call application startup code
-    mollyOnStartupCall(c_window_width/c_window_height);
+    molly_on_startup_call(c_window_width/c_window_height);
 
-    static f64 s_delta_time = 0.0f;
-    static f64 s_last_time = glfwGetTime();
-    
     PlatformInput old_input = {};
     while(!glfwWindowShouldClose(window_handle)) {
-        platformMeasureTimeElapsed(true);
         glfwPollEvents();
-        f64 polling_time = platformMeasureTimeElapsed();
         
         // Call application looping code ----------
-        PlatformInput new_input = processInput(window_handle, old_input);
+        PlatformInput new_input = process_input(window_handle, old_input);
         old_input = new_input;
-        mollyRenderLoop(s_delta_time, new_input);
+        molly_render_loop(new_input);
 
         glfwSwapBuffers(window_handle);
-        
-        // Timing ----------------------------------
-        const f64 new_time = glfwGetTime();
-        s_delta_time = (new_time - s_last_time);
-        s_last_time = new_time;
-
-#ifdef MOLLY_DEBUG
-        // auto message = std::string("Polling time: ") + std::to_string(polling_time);
-        // platformGLFWCMDLog(message.c_str());
-#endif
     }
    
     glfwDestroyWindow(window_handle);
@@ -94,7 +78,7 @@ int main() {
 }
 
 static PlatformInput 
-processInput(GLFWwindow* window_handle, PlatformInput old_input) {
+process_input(GLFWwindow* window_handle, PlatformInput old_input) {
     static bool first_input = true;
 
     PlatformInput input = {};
@@ -133,37 +117,48 @@ processInput(GLFWwindow* window_handle, PlatformInput old_input) {
 
 static void
 glfw_scroll_callback(GLFWwindow* window_handle, double xoffset, double yoffset) {
-    mollyMouseScroll(static_cast<float>(yoffset));
+    molly_mouse_scroll(static_cast<float>(yoffset));
 }
 
-/*
-##########################################################################
-###                        PLATFORM SERVICES                           ###
-##########################################################################
-*/
-f64 platformGetTime() {
+// ------------------------------------------------------------------------------
+// PLATFORM SERVICES
+// ------------------------------------------------------------------------------
+f64 platform_get_time() {
     return glfwGetTime();
 }
 
-f64 platformMeasureTimeElapsed(bool reset) {
-    static f64 s_last_time = glfwGetTime();
-    if (reset) { s_last_time = glfwGetTime(); }
-    s_last_time = reset ? glfwGetTime() : s_last_time;
-    return glfwGetTime() - s_last_time;
+/*
+    Returns the time since the last call with resset == true
+*/
+f64 platform_measure_time_elapsed(bool reset) {
+    static f64 s_last_time = 0.0;
+    static bool s_init = false;
+
+    const f64 now = glfwGetTime();
+
+    if (reset || !s_init) {
+        s_last_time = now;
+        s_init = true;
+        return 0.0;
+    }
+
+    const f64 delta = now - s_last_time;
+    s_last_time = now;
+    return delta;
 }
 
-void platformDisableMouseCursor() {
+void platform_disable_mouse_cursor() {
     if (sg_window_handle)  {
         glfwSetInputMode(sg_window_handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     }
 }
 
-void platformEnableMouseCursor(void* platformWindow) {
+void platform_enable_mouse_cursor(void* platformWindow) {
     if (sg_window_handle) {
         glfwSetInputMode(sg_window_handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 }
 
-void platformRequestQuit() {
+void platform_request_quit() {
     glfwSetWindowShouldClose(sg_window_handle, GLFW_TRUE);   
 }

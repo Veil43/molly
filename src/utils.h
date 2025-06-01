@@ -34,6 +34,7 @@
 
 namespace molly {
     struct ImageData {
+        std::string name;
         unsigned char* data;
         int width;
         int height;
@@ -65,11 +66,11 @@ namespace molly {
         kError,
     };
 
-    std::string loadTextFile(const char* path);
     void log(const std::string& message);
-    void printGLInfo();
-    ImageData loadImageFile(const char* path, bool flip = true);
-    void freeImageData(ImageData*);
+    void print_GL_info();
+    std::string load_text_file(const char* path);
+    ImageData load_image_file(const char* path, bool flip = true);
+    void free_image_data(ImageData*);
     std::string repeat(const std::string& str, int n);
     std::string resolve_path(const std::string& path);
     std::string toupper(const std::string& str);

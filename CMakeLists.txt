@@ -16,8 +16,7 @@ add_executable(molly src/main.cc
     src/camera.cc
     src/shader.cc
     src/utils.cc
-    src/model.cc
-    src/textfile.cc)
+    src/model.cc)
 
 # Define debug symbols
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

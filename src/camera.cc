@@ -12,7 +12,7 @@ Camera::Camera(const glm::vec3& position, f32 pitch, f32 yaw, const glm::vec3& w
       m_far{kDefaultFarDistance},
       m_aspect_ratio{kDefaultAspectRatio}
 {
-    this->updateCameraVectors();
+    this->update_camera_vectors();
 }
 
 Camera::Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 yaw, f32 world_up_x, f32 world_up_y) 
@@ -25,7 +25,7 @@ Camera::Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 y
       m_far{kDefaultFarDistance},
       m_aspect_ratio{kDefaultAspectRatio}
 {
-    this->updateCameraVectors();
+    this->update_camera_vectors();
 }
 
 Camera::Camera(const Camera& other) 
@@ -38,7 +38,7 @@ Camera::Camera(const Camera& other)
       m_far{other.m_far},
       m_aspect_ratio{other.m_aspect_ratio}
 {
-    this->updateCameraVectors();
+    this->update_camera_vectors();
 }
 
 Camera& Camera::operator=(const Camera& other) {
@@ -52,11 +52,11 @@ Camera& Camera::operator=(const Camera& other) {
     m_far = other.m_far;
     m_aspect_ratio = other.m_aspect_ratio;
 
-    this->updateCameraVectors();
+    this->update_camera_vectors();
     return *this;
 }
 
-glm::mat4 Camera::getViewMatrix() const {
+glm::mat4 Camera::get_view_matrix() const {
     /*
         Why pos + lookat?
         Because that is the POINT we are lookat not the direction
@@ -64,12 +64,12 @@ glm::mat4 Camera::getViewMatrix() const {
     return glm::lookAt(this->m_position, this->m_position + this->m_target, this->m_up);
 }
 
-glm::mat4 Camera::getProjectionMatrix() const {
+glm::mat4 Camera::get_projection_matrix() const {
     return glm::perspective(glm::radians(this->m_vfov), this->m_aspect_ratio, this->m_near, this->m_far);
 }
 
 
-void Camera::processMovementInput(molly::eMovement direction, f32 delta_time) {
+void Camera::process_movement_input(molly::eMovement direction, f32 delta_time) {
     switch (direction) {
         case molly::eMovement::kForward : {
             this->m_position += this->m_forward * this->m_movement_speed * delta_time;
@@ -92,10 +92,10 @@ void Camera::processMovementInput(molly::eMovement direction, f32 delta_time) {
         } break;
     }
 
-    this->updateCameraVectors();
+    this->update_camera_vectors();
 }
 
-void Camera::processMouseMovementInput(f32 xoffset, f32 yoffset, f32 delta_time) {
+void Camera::process_mouse_movement_input(f32 xoffset, f32 yoffset, f32 delta_time) {
     xoffset *= kDefaultMouseSensitivity * delta_time;
     yoffset *= kDefaultMouseSensitivity * delta_time;
 
@@ -108,13 +108,10 @@ void Camera::processMouseMovementInput(f32 xoffset, f32 yoffset, f32 delta_time)
         this->m_pitch = -89.9f;
     }
 
-    this->updateCameraVectors();
-
-    // TODO: remove this in the future
-    // molly::log(std::string("Mouse: (") + std::to_string(xoffset) + ", " + std::to_string(yoffset) + ")");
+    this->update_camera_vectors();
 }
 
-void Camera::processMouseScrollInput(f32 yoffset) {
+void Camera::process_mouse_scroll_input(f32 yoffset) {
     this->m_vfov -= yoffset;
 
     if (this->m_vfov < 1.0f) {
@@ -125,7 +122,7 @@ void Camera::processMouseScrollInput(f32 yoffset) {
     } 
 }
 
-void Camera::updateCameraVectors() {
+void Camera::update_camera_vectors() {
     glm::vec3 new_target;
     new_target.x = cos(glm::radians(this->m_yaw)) * cos(glm::radians(this->m_pitch));
     new_target.y = sin(glm::radians(this->m_pitch));
@@ -139,7 +136,4 @@ void Camera::updateCameraVectors() {
 
     this->m_right = glm::normalize(glm::cross(this->m_forward, this->m_world_up));
     this->m_up = glm::normalize(glm::cross(this->m_right, this->m_forward));
-
-    /// TODO: Sort this out
-    // molly::log(std::string("Lookat: [") + std::to_string(m_lookat.x) + "," + std::to_string(m_lookat.y) + "," + std::to_string(m_lookat.z) + "]");
 }

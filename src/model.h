@@ -58,7 +58,7 @@ struct ModelHandle {
 
 ModelData load_model_obj(const std::string& path);
 ModelHandle load_model_to_opengl(ModelData& m);
-MaterialHandle load_material_to_opengl(MaterialData& m);
+MaterialHandle load_material_to_opengl(MaterialData& m, bool flip_textures = true);
 void draw_model(ModelHandle& m, Shader& shader);
 
 #endif // RENDERTO_MODEL_H

@@ -1,6 +1,7 @@
 #ifndef MOLLY_CONFIG_H
 #define MOLLY_CONFIG_H
 
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <string>
 
