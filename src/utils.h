@@ -30,7 +30,6 @@
 #include <sstream>
 #include <vector>
 
-#include "glfw_utils.h"
 #include "molly_math.h"
 
 namespace molly {
@@ -42,48 +41,6 @@ namespace molly {
         int channel_size;
     };
 
-    struct MeshData {
-        glm::mat4 world_transform;
-        float* vertex_data;
-        unsigned int* index_data;
-        int vertex_count;
-        int index_count;
-        // unsigned int draw_mode;
-        unsigned int material_index;
-    };
-
-    struct TextureConfig {
-        unsigned int min_filter;
-        unsigned int mag_filter;
-        unsigned int wrap_s;
-        unsigned int wrap_t;
-    };
-
-    struct TextureInfo {
-        TextureConfig filter_wrap_config;
-        std::string image_uri;
-        unsigned int image_index;
-    };
-    
-    struct MaterialData {
-        TextureInfo base_color;
-        TextureInfo metallic_roughness;
-        TextureInfo normal;
-        // Currently not supported
-        TextureInfo emissive; 
-        // Currently not supported
-        TextureInfo occlusion;
-        glm::vec4 base_color_factor;
-        float metallic_factor;
-        float roughness_factor;
-    };
-
-    struct ModelData {
-        std::vector<MeshData> meshes;
-        std::vector<MaterialData> materials;
-        std::vector<ImageData> images;
-    };
-    
     /* 
         Should you be in utils.h???
         If not the where should you be
@@ -111,11 +68,13 @@ namespace molly {
     std::string loadTextFile(const char* path);
     void log(const std::string& message);
     void printGLInfo();
-    ImageData loadImageFile(const char* path);
+    ImageData loadImageFile(const char* path, bool flip = true);
     void freeImageData(ImageData*);
-    ModelData loadModel(const char* path);
-    void freeModel(ModelData*);
-    float* concatModelArrays(const MeshData& data);
+    std::string repeat(const std::string& str, int n);
+    std::string resolve_path(const std::string& path);
+    std::string toupper(const std::string& str);
+    std::string tolower(const std::string& str);
+    unsigned int load_image_to_opengl(ImageData&,unsigned int);
 
 } // namespace molly
 

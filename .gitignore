@@ -1,5 +1,11 @@
 .vs
 .vscode
 build
-assets/
-cache/
+assets
+.cache
+cache
+cmake-build-debug-visual-studio
+.idea
+out
+tests
+.github

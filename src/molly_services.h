@@ -4,8 +4,8 @@
 #include "types.h"
 #include "platform_services.h"
 
-void mollyToyOnStartupCall(f32 aspect_ratio);
-void mollyToyRenderLoop(f64 delta_time, PlatformInput keyboard_input);
+void mollyOnStartupCall(f32 aspect_ratio);
+void mollyRenderLoop(f64 delta_time, PlatformInput keyboard_input);
 void mollyMouseScroll(f32 yoffset);
 
 #endif

@@ -15,6 +15,9 @@ in vec3 normal;
 in vec2 tex_coord;
 
 uniform PBRMaterial pbr_material;
+uniform sampler2D diffuse;
 void main() {
-    FragColor = texture(pbr_material.diffuse_map, tex_coord);
+    // FragColor = vec4(0.9, 0.3, 0.4, 1.0);
+    FragColor = texture(diffuse, tex_coord);
+    // FragColor = 0.5 * (vec4(tex_coord.xy, 1.0, 1.0) + vec4(1.0));
 }

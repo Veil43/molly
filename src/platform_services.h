@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// TODO: remove???
 #define PLATFORM_DECL_SCROLL_CALLBACK(name) void name(void* window, double xoffset, double yoffset)
 typedef PLATFORM_DECL_SCROLL_CALLBACK(PlatformScrollCallbackType);
 
@@ -26,7 +27,9 @@ struct PlatformInput {
 
 f64 platformGetTime();
 f64 platformMeasureTimeElapsed(bool reset = false);
-void platformDisableMouseCursor(void* platformWindow = nullptr);
-void platformEnableMouseCursor(void* platformWindow = nullptr);
+void platformDisableMouseCursor();
+void platformEnableMouseCursor();
+void platformRequestQuit();
+f64 platformGetTime();
 
 #endif // MOLLY_PLATFORM_SERVICES_H

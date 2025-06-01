@@ -1,10 +1,8 @@
 #ifndef MOLLY_SHADER_H
 #define MOLLY_SHADER_H
 #include "types.h"
-#include <string>
 #include "molly_math.h"
-
-#include "texture.h"
+#include <string>
 
 class Shader {
 public:

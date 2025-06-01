@@ -11,7 +11,7 @@ public:
     static constexpr glm::vec3 kDefaultWorldUp              = glm::vec3(0.0f, 1.0f, 0.0f);
     static constexpr f32       kDefaultPitch                = 0.0f;
     static constexpr f32       kDefaultYaw                  = -90.0f;
-    static constexpr f32       kDefaultMovementSpeed        = 3.0f;  
+    static constexpr f32       kDefaultMovementSpeed        = 1.0f;  
     static constexpr f32       kDefaultMouseSensitivity     = 50.0f;  
     static constexpr f32       kDefaultVFOV                 = 45.0f;
     static constexpr f32       kDefaultNearDistance         = 0.1f;
@@ -24,7 +24,7 @@ public:
     glm::vec3 m_world_up;
     glm::vec3 m_up;
     glm::vec3 m_right;
-    glm::vec3 m_lookat;
+    glm::vec3 m_target;
     glm::vec3 m_forward;
     
     f32 m_vfov;
@@ -41,11 +41,11 @@ public:
 
     Camera(
         const glm::vec3& position   = kDefaultPosition, 
-        const glm::vec3& world_up   = kDefaultWorldUp, 
         f32 pitch                   = kDefaultPitch, 
-        f32 yaw                     = kDefaultYaw
+        f32 yaw                     = kDefaultYaw,
+        const glm::vec3& world_up   = kDefaultWorldUp
     );
-    Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_x, f32 world_up_y, f32 world_up_z, f32 pitch, f32 yaw);
+    Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 yaw, f32 world_up_x, f32 world_up_y);
 
     Camera(const Camera&);
     Camera& operator=(const Camera&);

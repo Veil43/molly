@@ -1,7 +1,7 @@
 #include "camera.h"
 #include "utils.h"
 
-Camera::Camera(const glm::vec3& position, const glm::vec3& world_up, f32 pitch, f32 yaw)
+Camera::Camera(const glm::vec3& position, f32 pitch, f32 yaw, const glm::vec3& world_up)
     : m_position{position},
       m_world_up{world_up},
       m_pitch{pitch},
@@ -15,7 +15,7 @@ Camera::Camera(const glm::vec3& position, const glm::vec3& world_up, f32 pitch, 
     this->updateCameraVectors();
 }
 
-Camera::Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_x, f32 world_up_y, f32 world_up_z, f32 pitch, f32 yaw) 
+Camera::Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 yaw, f32 world_up_x, f32 world_up_y) 
     : m_position{pos_x, pos_y, pos_z}, 
       m_world_up{world_up_x, world_up_y, world_up_z}, 
       m_pitch{pitch}, 
@@ -61,7 +61,7 @@ glm::mat4 Camera::getViewMatrix() const {
         Why pos + lookat?
         Because that is the POINT we are lookat not the direction
     */
-    return glm::lookAt(this->m_position, this->m_position + this->m_lookat, this->m_up);
+    return glm::lookAt(this->m_position, this->m_position + this->m_target, this->m_up);
 }
 
 glm::mat4 Camera::getProjectionMatrix() const {
@@ -126,20 +126,20 @@ void Camera::processMouseScrollInput(f32 yoffset) {
 }
 
 void Camera::updateCameraVectors() {
-    glm::vec3 new_lookat;
-    new_lookat.x = cos(glm::radians(this->m_yaw)) * cos(glm::radians(this->m_pitch));
-    new_lookat.y = sin(glm::radians(this->m_pitch));
-    new_lookat.z = sin(glm::radians(this->m_yaw)) * cos(glm::radians(this->m_pitch));
-    this->m_lookat = glm::normalize(new_lookat);
-    this->m_forward = this->m_lookat;
+    glm::vec3 new_target;
+    new_target.x = cos(glm::radians(this->m_yaw)) * cos(glm::radians(this->m_pitch));
+    new_target.y = sin(glm::radians(this->m_pitch));
+    new_target.z = sin(glm::radians(this->m_yaw)) * cos(glm::radians(this->m_pitch));
+    this->m_target = glm::normalize(new_target);
+    this->m_forward = this->m_target;
 
     if (isFPS) {
         this->m_forward.y = 0;
     }
 
-    this->m_right = glm::normalize(glm::cross(this->m_lookat, this->m_world_up));
-    this->m_up = glm::normalize(glm::cross(this->m_right, this->m_lookat));
+    this->m_right = glm::normalize(glm::cross(this->m_forward, this->m_world_up));
+    this->m_up = glm::normalize(glm::cross(this->m_right, this->m_forward));
 
-    // TODO Sort this out
+    /// TODO: Sort this out
     // molly::log(std::string("Lookat: [") + std::to_string(m_lookat.x) + "," + std::to_string(m_lookat.y) + "," + std::to_string(m_lookat.z) + "]");
 }
