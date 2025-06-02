@@ -18,6 +18,7 @@ struct PlatformInput {
     PlatformKey s_key;
     PlatformKey d_key;
     PlatformKey esc_key;
+    PlatformKey lctrl_key;
 };
 
 f64 platform_get_time();

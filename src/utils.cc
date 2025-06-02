@@ -13,18 +13,19 @@
 
 #include <sstream>
 #include <fstream>
-#include <iostream>
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
 
-#include "types.h"
+#include "logger.h"
 
 std::string molly::load_text_file(const char* path) {
     std::ifstream file(path);
 
     if (!file) {
-        std::cerr << "UTIL::IO: Could not open file: " << path << std::endl;
+        std::string message = "UTIL::IO: Could not open file: "; 
+        message += path;
+        logger::log_debug(message, logger::eLoggingLevel::kWarning, 5.0);
         return "";
     }
 
@@ -33,8 +34,9 @@ std::string molly::load_text_file(const char* path) {
     return text.str();
 }
 
-void molly::log(const std::string& message) {
-    std::cerr << message << std::endl;
+
+void molly::cmdlog(const std::string& message) {
+    printf("%s\n", message.c_str());
 }
 
 void molly::print_GL_info() {
@@ -42,7 +44,7 @@ void molly::print_GL_info() {
     GL_QUERY_ERROR(const char* vendor = (char*)glGetString(GL_VENDOR);)
     GL_QUERY_ERROR(const char* renderer = (char*)glGetString(GL_RENDERER);)
     GL_QUERY_ERROR(const char* glsl_version = (char*)glGetString(GL_SHADING_LANGUAGE_VERSION);)
-    molly::log(
+    molly::cmdlog(
         std::string(
         "================== OpenGL Information ===================\n") + 
         "VERSION: " + version + "\n"
@@ -51,22 +53,22 @@ void molly::print_GL_info() {
         "GLSL VERSION: " + glsl_version + "\n"
     );
 
-    i32 max_texture_units = 0;
-    i32 max_texture_size = 0;
-    i32 max_draw_buffers = 0; // like color buffers, depth buffers etc
-    i32 max_vertex_attributes = 0;
-    i32 max_uniforms = 0;
+    int max_texture_units = 0;
+    int max_texture_size = 0;
+    int max_draw_buffers = 0; // like color buffers, depth buffers etc
+    int max_vertex_attributes = 0;
+    int max_uniforms = 0;
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_texture_units);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture_size);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_DRAW_BUFFERS, &max_draw_buffers);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_vertex_attributes);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max_uniforms);)
 
-    molly::log("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
-    molly::log("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
-    molly::log("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
-    molly::log("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
-    molly::log("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
+    molly::cmdlog("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
+    molly::cmdlog("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
+    molly::cmdlog("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
+    molly::cmdlog("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
+    molly::cmdlog("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
 
 }
 
@@ -82,7 +84,7 @@ molly::ImageData molly::load_image_file(const char* path, bool flip) {
 
     unsigned char* data = stbi_load(path, &x, &y, &c, 0);
     if (!data) {
-        molly::log(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
+        molly::cmdlog(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
     } else {
 
         result.data = data;
@@ -115,7 +117,7 @@ std::string molly::repeat(const std::string& str, int n) {
 
 std::string molly::resolve_path(const std::string& path) {
     namespace fs = std::filesystem;
-    std::cout << path << std::endl;
+
     std::string output_path = path;
     for (int i = 0; i < 7; i++) {
         if (fs::exists(output_path)) return output_path;
@@ -128,13 +130,13 @@ std::string molly::resolve_path(const std::string& path) {
 std::string molly::toupper(const std::string& str) {
     std::string output_string = str;
     std::transform(output_string.begin(), output_string.end(), output_string.begin(), 
-                   [](u8 c){ return std::toupper(c); });
+                   [](unsigned char c){ return std::toupper(c); });
     return output_string;
 }
  std::string molly::tolower(const std::string& str) {
     std::string output_string = str;
     std::transform(output_string.begin(), output_string.end(), output_string.begin(), 
-                   [](u8 c){ return std::tolower(c); });
+                   [](unsigned char c){ return std::tolower(c); });
     return output_string;
  }
 

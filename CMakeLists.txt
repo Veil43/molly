@@ -41,7 +41,8 @@ add_executable(molly src/main.cc
     src/camera.cc
     src/shader.cc
     src/utils.cc
-    src/model.cc)
+    src/model.cc
+    src/logger.cc)
 
 # link
 target_link_libraries(molly PRIVATE imgui)

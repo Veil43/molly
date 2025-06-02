@@ -1,7 +1,8 @@
-#include <iostream>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
+#include <iostream>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -22,7 +23,7 @@ int main() {
 
     // Initialize windowing
     if (!glfwInit()) {
-        std::cerr << "Error: could not initialize glfw3!" << std::endl;
+        std::cerr << "ERROR::GLFW: could not initialize glfw3!" << std::endl;
         exit(1);
     }
 
@@ -43,7 +44,7 @@ int main() {
     );
 
     if (!window_handle) {
-        std::cerr << "Error: could not create a window with glfw3!" << std::endl;
+        std::cerr << "ERROR::GLFW: could not create a window with glfw3!" << std::endl;
         glfwTerminate();
         exit(1);
     }
@@ -63,10 +64,7 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImGui::StyleColorsDark(); // Optional: style
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsDark(); // Setup Dear ImGui style
 
     // Setup platform/renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window_handle, true);
@@ -99,6 +97,7 @@ int main() {
 
         glfwSwapBuffers(window_handle);
     }
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -126,6 +125,9 @@ process_input(GLFWwindow* window_handle, PlatformInput old_input) {
 
     input.esc_key.is_down = (glfwGetKey(window_handle, GLFW_KEY_ESCAPE) == GLFW_PRESS);
     input.esc_key.was_down = old_input.esc_key.is_down;
+
+    input.lctrl_key.is_down = (glfwGetKey(window_handle, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS);
+    input.lctrl_key.was_down = old_input.lctrl_key.is_down;
 
     if (first_input) {
         old_input.mouse_x = WINDOW_WIDTH/2;
@@ -183,7 +185,7 @@ void platform_disable_mouse_cursor() {
     }
 }
 
-void platform_enable_mouse_cursor(void* platformWindow) {
+void platform_enable_mouse_cursor() {
     if (sg_window_handle) {
         glfwSetInputMode(sg_window_handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }

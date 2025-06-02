@@ -26,7 +26,7 @@ compile_shader(u32 shader_id, u32 shader_type, const char* shader_source) {
     if (!success) {
         GL_QUERY_ERROR(glGetShaderInfoLog(shader_id, 512, NULL, info_log);)
         const char* type_string = shader_type ? "FRAGMENT::" : "VERTEX::";
-        molly::log(std::string("[ERROR]::SHADER::") + type_string + "COMPILATION_FAILED\n" + info_log);
+        molly::cmdlog(std::string("[ERROR]::SHADER::") + type_string + "COMPILATION_FAILED\n" + info_log);
         return 0;
     }
     return 1;
@@ -52,7 +52,7 @@ Shader::Shader(const char* vpath, const char* fpath) {
     GL_QUERY_ERROR(glGetProgramiv(this->m_id, GL_LINK_STATUS, &success);)
     if (!success) {
         GL_QUERY_ERROR(glGetProgramInfoLog(this->m_id, 512, NULL, info_log);)
-        GL_QUERY_ERROR(molly::log(std::string("[ERROR]::SHADER::") + "LINKING_FAILED\n" + info_log);)
+        GL_QUERY_ERROR(molly::cmdlog(std::string("[ERROR]::SHADER::") + "LINKING_FAILED\n" + info_log);)
     }
     GL_QUERY_ERROR(glDeleteShader(vshader);)
     GL_QUERY_ERROR(glDeleteShader(fshader);)

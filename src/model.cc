@@ -1,14 +1,13 @@
 #define MOLLY_HAS_GL
 #include <glad/glad.h>
-#include <iostream>
-
-#include "model.h"
-#include "utils.h"
 
 #include <fstream>
 #include <sstream>
-#include <cstdio>
 #include <cassert>
+
+#include "model.h"
+#include "utils.h"
+#include "logger.h"
 
 struct IndexTriple {
     i32 p, t, n;
@@ -92,7 +91,9 @@ void draw_model(ModelHandle& m, Shader& shader) {
 ModelData load_model_obj(const std::string& path) {
     std::ifstream file(path);
     if (!file.is_open()) {
-        std::cerr << "ERROR::I/O: Could not open file <" << path << ">\n";
+        std::string message = "I/O: Could not open file with path: <";
+        message += path + ">";
+        logger::log_debug(message);
         return ModelData{};
     }
 
@@ -178,7 +179,6 @@ ModelData load_model_obj(const std::string& path) {
 
     u32 fslash_pos = path.find_last_of("/");
     std::string material_directory = path.substr(0,fslash_pos + 1);
-    std::cout << material_directory << " END!\n";
     MaterialData material = parse_material(material_directory, material_file);
 
     ModelData output_model;
@@ -324,7 +324,9 @@ static MaterialData parse_material(const std::string& dir, const std::string& fi
     std::ifstream ifs(path);
     MaterialData output_material = {};
     if (!ifs.is_open()) {
-        std::cerr << "ERROR::I/O: could not load file with path : <" << path << ">\n";
+        std::string message = "I/O: could not load file with path : <";
+        message += path + ">";
+        logger::log_debug(message);
         return output_material;
     }
 
@@ -351,13 +353,13 @@ static MaterialData parse_material(const std::string& dir, const std::string& fi
             iss >> file;
             output_material.diffuse = dir + file; 
             diff_found = true;
-        } else if ((prefix == "map_bump" || prefix == "bump") && !norm_found) {
 
-            std::cout << "Line for bump: " << line << "\n";
+        } else if ((prefix == "map_bump" || prefix == "bump") && !norm_found) {
             std::string file;
             iss >> file;
             output_material.normal = dir + file;
             norm_found = true;
+
         } else if (prefix == "map_ks" && !spec_found) {
             std::string file;
             iss >> file;

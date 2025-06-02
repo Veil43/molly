@@ -2,10 +2,11 @@
 .vscode
 build
 assets
-.cache/clangd/index/*
+.cache
 cache
 cmake-build-debug-visual-studio
 .idea
 out
 tests
 .github
+imgui.ini
