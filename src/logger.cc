@@ -70,8 +70,9 @@ void logger::print_messages(float delta_time) {
     ImGui::End();
 }
 
-void logger::write_text_at(const std::string& message, float x, float y) {
-
+void logger::write_text_at(const std::string& message, float x, float y, float r, float g, float b) {
+    ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
+    draw_list->AddText(ImVec2(x, y), IM_COL32(r, g, b, 255), message.c_str());
 }
 
 /*

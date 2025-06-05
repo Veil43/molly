@@ -42,7 +42,8 @@ add_executable(molly src/main.cc
     src/shader.cc
     src/utils.cc
     src/model.cc
-    src/logger.cc)
+    src/logger.cc
+    src/gltf_loader.cc)
 
 # link
 target_link_libraries(molly PRIVATE imgui)
@@ -53,5 +54,6 @@ target_link_libraries(molly PRIVATE OpenGL::GL)
 target_include_directories(molly PRIVATE third-party/glad/include)
 target_include_directories(molly PRIVATE third-party/stb)
 target_include_directories(molly PRIVATE third-party/glm)
+target_include_directories(molly PRIVATE third-party/tinygltf)
 
 endif()

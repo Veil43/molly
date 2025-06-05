@@ -15,7 +15,7 @@
         std::ostringstream oss;                                                             \
         oss << "ERROR::OPENGL: 0x" << std::hex << err__ << std::dec                         \
             << " in file: " << __FILE__ << " at line: " << __LINE__;                        \
-        molly::cmdlog(oss.str());                                                           \
+        utils::cmdlog(oss.str());                                                           \
         DEBUG_BREAK                                                                         \
     }
 
@@ -31,7 +31,7 @@
 
 #include "molly_math.h"
 
-namespace molly 
+namespace utils 
 {
 struct ImageData {
     std::string name;
@@ -45,7 +45,7 @@ struct ImageData {
 /* 
     Should you be in utils.h???
     If not the where should you be
-    /// TODO: remove this from utils
+    /// TODO: remove this out from utils
 */
 enum class eMovement {
     kForward,
@@ -57,7 +57,7 @@ enum class eMovement {
 void cmdlog(const std::string& message);
 void print_GL_info();
 std::string load_text_file(const char* path);
-ImageData load_image_file(const char* path, bool flip = true);
+ImageData load_image_file(const std::string& path, bool flip = true);
 void free_image_data(ImageData*);
 std::string repeat(const std::string& str, int n);
 std::string resolve_path(const std::string& path);

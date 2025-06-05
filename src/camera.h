@@ -54,7 +54,7 @@ public:
 
     glm::mat4 get_view_matrix() const;
     glm::mat4 get_projection_matrix() const;
-    void process_movement_input(molly::eMovement direction, f32 delta_time);
+    void process_movement_input(utils::eMovement direction, f32 delta_time);
 
     void process_mouse_movement_input(f32 xoffset, f32 yoffset, f32 delta_time);
     void process_mouse_scroll_input(f32 yoffset);

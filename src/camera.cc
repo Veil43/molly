@@ -69,21 +69,21 @@ glm::mat4 Camera::get_projection_matrix() const {
 }
 
 
-void Camera::process_movement_input(molly::eMovement direction, f32 delta_time) {
+void Camera::process_movement_input(utils::eMovement direction, f32 delta_time) {
     switch (direction) {
-        case molly::eMovement::kForward : {
+        case utils::eMovement::kForward : {
             this->m_position += this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case molly::eMovement::kBackward : {
+        case utils::eMovement::kBackward : {
             this->m_position -= this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case molly::eMovement::kLeft : {
+        case utils::eMovement::kLeft : {
             this->m_position -= this->m_right * this->m_movement_speed * delta_time;
         } break;
         
-        case molly::eMovement::kRight : {
+        case utils::eMovement::kRight : {
             this->m_position += this->m_right * this->m_movement_speed * delta_time;
         } break;
 

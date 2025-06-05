@@ -8,7 +8,6 @@
 #undef STB_IMAGE_IMPLEMENTATION
 #undef STB_IMAGE_WRITE_IMPLEMENTATION
 
-#define TINYGLTF_IMPLEMENTATION
 #include <glad/glad.h>
 
 #include <sstream>
@@ -19,7 +18,7 @@
 
 #include "logger.h"
 
-std::string molly::load_text_file(const char* path) {
+std::string utils::load_text_file(const char* path) {
     std::ifstream file(path);
 
     if (!file) {
@@ -35,16 +34,16 @@ std::string molly::load_text_file(const char* path) {
 }
 
 
-void molly::cmdlog(const std::string& message) {
+void utils::cmdlog(const std::string& message) {
     printf("%s\n", message.c_str());
 }
 
-void molly::print_GL_info() {
+void utils::print_GL_info() {
     GL_QUERY_ERROR(const char* version = (char*)glGetString(GL_VERSION);)
     GL_QUERY_ERROR(const char* vendor = (char*)glGetString(GL_VENDOR);)
     GL_QUERY_ERROR(const char* renderer = (char*)glGetString(GL_RENDERER);)
     GL_QUERY_ERROR(const char* glsl_version = (char*)glGetString(GL_SHADING_LANGUAGE_VERSION);)
-    molly::cmdlog(
+    utils::cmdlog(
         std::string(
         "================== OpenGL Information ===================\n") + 
         "VERSION: " + version + "\n"
@@ -64,16 +63,16 @@ void molly::print_GL_info() {
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &max_vertex_attributes);)
     GL_QUERY_ERROR(glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &max_uniforms);)
 
-    molly::cmdlog("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
-    molly::cmdlog("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
-    molly::cmdlog("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
-    molly::cmdlog("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
-    molly::cmdlog("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
+    utils::cmdlog("[OpenGL::LIMITS]: Max Texture Units: " + std::to_string(max_texture_units));
+    utils::cmdlog("[OpenGL::LIMITS]: Max Texture Size: " + std::to_string(max_texture_size) + "x" + std::to_string(max_texture_size) + " Pixels");
+    utils::cmdlog("[OpenGL::LIMITS]: Max Draw Buffers: " + std::to_string(max_draw_buffers) + " (Like color/depth/stencil buffers)");
+    utils::cmdlog("[OpenGL::LIMITS]: Max Vertex Attributes: " + std::to_string(max_vertex_attributes));
+    utils::cmdlog("[OpenGL::LIMITS]: Max Uniforms: " + std::to_string(max_uniforms));
 
 }
 
-molly::ImageData molly::load_image_file(const char* path, bool flip) {
-    molly::ImageData result = {};
+utils::ImageData utils::load_image_file(const std::string& path, bool flip) {
+    utils::ImageData result = {};
     int x = 0;
     int y = 0;
     int c = 0;
@@ -82,9 +81,9 @@ molly::ImageData molly::load_image_file(const char* path, bool flip) {
         stbi_set_flip_vertically_on_load(1);
     }
 
-    unsigned char* data = stbi_load(path, &x, &y, &c, 0);
+    unsigned char* data = stbi_load(path.c_str(), &x, &y, &c, 0);
     if (!data) {
-        molly::cmdlog(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
+        utils::cmdlog(std::string("ERROR::IO::STB_IMAGE: Could not load file with path <") + path + ">");
     } else {
 
         result.data = data;
@@ -95,7 +94,7 @@ molly::ImageData molly::load_image_file(const char* path, bool flip) {
     return std::move(result);
 }
 
-void molly::free_image_data(ImageData* img) {
+void utils::free_image_data(ImageData* img) {
     if (!img || !img->data)
         return;
  
@@ -106,7 +105,7 @@ void molly::free_image_data(ImageData* img) {
     img->channel_count = 0;
 }
 
-std::string molly::repeat(const std::string& str, int n) {
+std::string utils::repeat(const std::string& str, int n) {
     std::string tmp = str;
     while (n>1) {
         tmp+=str;
@@ -115,7 +114,7 @@ std::string molly::repeat(const std::string& str, int n) {
     return tmp;
 }
 
-std::string molly::resolve_path(const std::string& path) {
+std::string utils::resolve_path(const std::string& path) {
     namespace fs = std::filesystem;
 
     std::string output_path = path;
@@ -127,20 +126,20 @@ std::string molly::resolve_path(const std::string& path) {
     return output_path;
 }
 
-std::string molly::toupper(const std::string& str) {
+std::string utils::toupper(const std::string& str) {
     std::string output_string = str;
     std::transform(output_string.begin(), output_string.end(), output_string.begin(), 
                    [](unsigned char c){ return std::toupper(c); });
     return output_string;
 }
- std::string molly::tolower(const std::string& str) {
+ std::string utils::tolower(const std::string& str) {
     std::string output_string = str;
     std::transform(output_string.begin(), output_string.end(), output_string.begin(), 
                    [](unsigned char c){ return std::tolower(c); });
     return output_string;
  }
 
-unsigned int molly::load_image_to_opengl(ImageData& image, unsigned int texture_unit) {
+unsigned int utils::load_image_to_opengl(ImageData& image, unsigned int texture_unit) {
     if (!image.data) {
         return 0;
     }

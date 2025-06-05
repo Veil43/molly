@@ -5,16 +5,11 @@
 #include "molly_math.h"
 #include "utils.h"
 #include "shader.h"
-
-#include <string>
+#include "gltf_loader.h"
 
 static const u32 kPositionIndex = 0;
 static const u32 kNormalIndex = 1;
 static const u32 kTexCoordIndex = 2;
-
-static const u32 kDiffuseTexture = 0;
-static const u32 kNormalTexture = 1;
-static const u32 kSpecularTexture = 2;
 
 struct Vertex {
     glm::vec3 position;
@@ -22,43 +17,44 @@ struct Vertex {
     glm::vec2 tex_coord;
 };
 
-struct MaterialData {
-    std::string diffuse;
-    std::string normal;
-    std::string specular;
-};
-
-struct ModelData {
-    std::vector<Vertex> vertices;
-    std::vector<i32> indices;
-
-    i32 vcount;
-    i32 icount;
-
-    MaterialData material;
-};
-
-struct MaterialHandle {
-    molly::ImageData diff_image;
-    molly::ImageData norm_image;
-    molly::ImageData spec_image;
-
-    u32 diff_texture;
-    u32 norm_texture;
-    u32 spec_texture;
-};
-
-struct ModelHandle {
+// -----------------------------------------
+// glTF
+// -----------------------------------------
+struct gMeshHandle {
     u32 vao;
-    u32 vbo;
+    u32 vbo[3];
     u32 ebo;
-    int vcount;
+    glm::mat4 transform;
     int icount;
+    int material_index;
 };
 
-ModelData load_model_obj(const std::string& path);
-ModelHandle load_model_to_opengl(ModelData& m);
-MaterialHandle load_material_to_opengl(MaterialData& m, bool flip_textures = true);
-void draw_model(ModelHandle& m, Shader& shader);
+struct gModelHandle {
+    std::vector<gMeshHandle> meshes;
+};
+
+struct gTextureHandle {
+    u32 texture_unit;
+    u32 texture;
+};
+
+struct gMaterialHandle {
+    gTextureHandle diffuse;
+    gTextureHandle metallic_roughness;
+    gTextureHandle normal;
+};
+
+struct gSceneHandle {
+    std::vector<gModelHandle> models;
+    std::map<int, gMaterialHandle> materials;
+};
+
+gMeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave = false);
+gModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave);
+gMaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material);
+gSceneHandle load_gltf_scene_to_opengl(gltf::Scene& scene, bool interleave);
+
+void draw_gltf_model(const gModelHandle& m, Shader& shader);
+void draw_gltf_scene(const gSceneHandle& scene, Shader& shader);
 
 #endif // RENDERTO_MODEL_H
