@@ -21,11 +21,13 @@ struct Vertex {
 // glTF
 // -----------------------------------------
 struct gMeshHandle {
-    u32 vao;
-    u32 vbo[3];
-    u32 ebo;
     glm::mat4 transform;
+    u32 vbo[3];
+    u32 vao;
+    u32 ebo;
+    u32 indices_type;
     int icount;
+    int vcount;
     int material_index;
 };
 

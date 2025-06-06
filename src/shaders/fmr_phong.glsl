@@ -7,6 +7,10 @@ in vec2 tex_coord;
 uniform sampler2D diffuse_map;
 uniform sampler2D metallic_roughness_map;
 uniform sampler2D normal_map;
+uniform vec4 diffuse_factor;
+uniform float metallic_factor;
+uniform float roughness_factor;
+
 
 void main() {
 

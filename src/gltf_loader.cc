@@ -1,5 +1,5 @@
 #include "gltf_loader.h"
-
+#define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_IMPLEMENTATION
 #include "tiny_gltf.h"
 using namespace tinygltf;
@@ -8,6 +8,7 @@ using Root = Model;
 #include <cstdio>
 #include <cassert>
 
+#include "logger.h"
 #include "molly_math.h"
 
 namespace fs = std::filesystem;
@@ -22,7 +23,10 @@ static gltf::TextureInfo
 get_texture_info(const Root& root, int index) {
     gltf::TextureInfo output_texture = {};
 
-    assert(index >= 0);
+    // assert(index >= 0);
+    if (index < 0) {
+        return output_texture;
+    }
     const Texture& texture = root.textures[index];
     assert(texture.source >= 0);
 
@@ -49,10 +53,10 @@ get_buffer_data_from_accessor(const Root& root, int acc_index) {
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:     { component_size = 1; } break;
         case TINYGLTF_COMPONENT_TYPE_SHORT:             { component_size = 2; } break;
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:    { component_size = 2; } break;
-        case TINYGLTF_COMPONENT_TYPE_INT:               { component_size = 4; } break;
+        // case TINYGLTF_COMPONENT_TYPE_INT:               { component_size = 4; } break;
         case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:      { component_size = 4; } break;
         case TINYGLTF_COMPONENT_TYPE_FLOAT:             { component_size = 4; } break;
-        case TINYGLTF_COMPONENT_TYPE_DOUBLE :           { component_size = 8; } break;
+        // case TINYGLTF_COMPONENT_TYPE_DOUBLE :           { component_size = 8; } break;
     }
 
     switch (accessor.type) {
@@ -73,6 +77,28 @@ get_buffer_data_from_accessor(const Root& root, int acc_index) {
     }
 
     return output_buffer;
+}
+
+static gltf::eBasicType 
+get_accessor_component_type(const Root& root, int acc_index) {
+    assert(acc_index >= 0);
+    const Accessor& accessor = root.accessors[acc_index];
+
+    gltf::eBasicType output_type = gltf::eBasicType::kUnsignedInt;
+    switch(accessor.componentType) {
+        case TINYGLTF_COMPONENT_TYPE_BYTE:              { output_type = gltf::eBasicType::kByte; } break;
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:     { output_type = gltf::eBasicType::kUnsignedByte; } break;
+        case TINYGLTF_COMPONENT_TYPE_SHORT:             { output_type = gltf::eBasicType::kShort; } break;
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:    { output_type = gltf::eBasicType::kUnsignedShort; } break;
+        case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:      { output_type = gltf::eBasicType::kUnsignedInt; } break;
+        case TINYGLTF_COMPONENT_TYPE_FLOAT:             { output_type = gltf::eBasicType::kFloat; } break;
+    }
+    return output_type;
+}
+
+static bool
+primitive_contains_attributes(const Primitive& primitive, const std::string& attribute) {
+    return (primitive.attributes.find(attribute) != primitive.attributes.end());
 }
 
 static std::vector<gltf::MeshData> 
@@ -126,22 +152,32 @@ load_primitive_meshes(const Root& root, int mesh_id) {
         // ----------------------------------------------------
         // Mesh
         // ----------------------------------------------------
+        if (primitive_contains_attributes(primitive, "POSITION")) {
+            int pos_accessor_index = primitive.attributes.at("POSITION");
+            curr_mesh.pos_data = get_buffer_data_from_accessor(root, pos_accessor_index);
+        }
+        if (primitive_contains_attributes(primitive, "NORMAL")) {
+            int nor_accessor_index = primitive.attributes.at("NORMAL");
+            curr_mesh.nor_data = get_buffer_data_from_accessor(root, nor_accessor_index);
+        }
+        if (primitive_contains_attributes(primitive, "TEXCOORD_0")) {
+            int tex_accessor_index_0 = primitive.attributes.at("TEXCOORD_0");
+            curr_mesh.tex_data_0 = get_buffer_data_from_accessor(root, tex_accessor_index_0);
+            curr_mesh.texture_type_0 = get_accessor_component_type(root, tex_accessor_index_0);
+        }
         /// TODO: add full support for tangent and other texture coordinates
-        int pos_accessor_index = primitive.attributes.at("POSITION");
-        int nor_accessor_index = primitive.attributes.at("NORMAL");
         // int tan_accessor_index = primitive.attributes.at("TANGENT");
-        int tex_accessor_index_0 = primitive.attributes.at("TEXCOORD_0");
         // int tex_accessor_index_1 = primitive.attributes.at("TEXCOORD_");
-        int indices_accessor_index = primitive.indices;
-
-        curr_mesh.pos_data = get_buffer_data_from_accessor(root, pos_accessor_index);
-        curr_mesh.nor_data = get_buffer_data_from_accessor(root, nor_accessor_index);
-        curr_mesh.tex_data = get_buffer_data_from_accessor(root, tex_accessor_index_0);
-        curr_mesh.indices_data = get_buffer_data_from_accessor(root, indices_accessor_index);
+        
+        if (primitive.indices >= 0) {
+            curr_mesh.indices_data = get_buffer_data_from_accessor(root, primitive.indices);
+            curr_mesh.indices_type = get_accessor_component_type(root, primitive.indices);
+        }
 
         // ----------------------------------------------------
         // Material
         // ----------------------------------------------------
+        /// TODO: maybe see if tinygltf already loads image data 
         gltf::MaterialInfo curr_material;
         assert(primitive.material >= 0);
         const Material& material =  root.materials[primitive.material];
@@ -315,12 +351,22 @@ std::vector<gltf::ModelData> load_models_from_scene(const Root& root, int scene_
     return output_models;
 }
 
+
 gltf::Scene gltf::load_gltf_file(const std::filesystem::path& path) {
     Root root;
     TinyGLTF loader;
     std::string err;
     std::string warn;
 
+    LoadImageDataFunction fake_loader_does_nothing = [](
+        Image *image, const int image_idx, std::string *err,
+        std::string *warn, int req_width, int req_height,
+        const unsigned char *bytes, int size, void *user_data) -> bool 
+    { 
+        return true;
+    };
+
+    loader.SetImageLoader(fake_loader_does_nothing, nullptr);
     bool ret = loader.LoadASCIIFromFile(&root, &err, &warn, path.string());
 
     if (!warn.empty()) {

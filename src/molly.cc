@@ -1,17 +1,10 @@
 #define MOLLY_HAS_GL
+#include "molly.h"
 
 // TODO
 // Subsystems:
 /*
-Windowing + Input => OS
------------------------
-Global State
-store heirearchy
-Asset Pipeline
-parse, cache, dispatch
-Renderer
-needs: Assets, inputs
-updates and queries: Global state
+// Create a state object that is accessible everywhere.
 */
 
 #include <glad/glad.h>
@@ -25,13 +18,10 @@ updates and queries: Global state
 #include "logger.h"
 #include "gltf_loader.h"
 
-#include "imgui.h"
-
-#include "molly.h"
-
 static bool key_press(PlatformKey& k);
 static bool key_hold(PlatformKey& k);
 static bool key_release(PlatformKey& k);
+static void imgui_debug_pannel();
 
 static Shader shader{};
 static Camera cam{glm::vec3(1.0)};
@@ -39,15 +29,13 @@ static bool sg_mouse_is_visible = true;
 static gSceneHandle scene = {};
 
 void molly_on_startup_call(f32 aspect_ratio) {
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
     // -- Platform Configurations --
     sg_mouse_is_visible = false;
     platform_disable_mouse_cursor();
 
-    gltf::Scene backpack = gltf::load_gltf_file(utils::resolve_path("assets/survival_guitar_backpack/scene.gltf"));
+    gltf::Scene backpack = gltf::load_gltf_file(utils::resolve_path("assets/Sponza/glTF/Sponza.gltf"));
     scene = load_gltf_scene_to_opengl(backpack, false);
     
     shader = Shader(utils::resolve_path("src/shaders/vno_mat.glsl").c_str(), utils::resolve_path("src/shaders/fmr_phong.glsl").c_str());
@@ -59,8 +47,8 @@ void molly_on_startup_call(f32 aspect_ratio) {
     shader.set_vec3f("point_light1.diffuse", glm::vec3(1.0));
     shader.set_vec3f("point_light1.specular", glm::vec3(1.0));
     shader.unbind();
-    cam.m_movement_speed = 50.0f;
-    cam.m_position = glm::vec3(0.0f,0.0f,500.0f);
+    cam.m_movement_speed = 1.0f;
+    cam.m_position = glm::vec3(0.0f,0.0f,0.0f);
     cam.m_far = 10000.0f;
 }
 

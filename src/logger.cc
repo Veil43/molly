@@ -35,7 +35,7 @@ void logger::log_debug(const std::string& message, eLoggingLevel level, double d
 */
 void logger::print_messages(float delta_time) {
     ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_Always);
-    ImGui::Begin("Console: ");
+    ImGui::Begin("Debug Messages");
 
     for (int i = sg_log_messages.size() - 1; i >= 0; i--) {
         auto& msg = sg_log_messages[i];

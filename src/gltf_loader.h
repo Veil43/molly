@@ -10,6 +10,15 @@
 namespace gltf 
 {
 
+enum class eBasicType {
+    kByte,
+    kUnsignedByte,
+    kShort,
+    kUnsignedShort,
+    kUnsignedInt,
+    kFloat,
+};
+
 struct TextureInfo {
     std::string name;
     std::string path;
@@ -31,9 +40,11 @@ struct MeshData {
     glm::mat4 transform;
     std::vector<unsigned char> pos_data;
     std::vector<unsigned char> nor_data;
-    std::vector<unsigned char> tex_data;
+    std::vector<unsigned char> tex_data_0;
     std::vector<unsigned char> indices_data;
     int material_index;
+    eBasicType indices_type;
+    eBasicType texture_type_0;
 };
 
 struct ModelData {

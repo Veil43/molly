@@ -17,7 +17,35 @@ gMeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
     gMeshHandle output_mesh = {};
     output_mesh.transform = mesh.transform;
     output_mesh.icount = mesh.indices_data.size();
+    output_mesh.vcount = mesh.pos_data.size() / 8;      /// NOTE: to change with more attributes
     output_mesh.material_index = mesh.material_index;
+    output_mesh.indices_type = GL_UNSIGNED_INT;
+
+    // see the glTF spec 5.24.2 mesh.primitive.indices: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_mesh_primitive_indices
+    switch(mesh.indices_type) {
+        case gltf::eBasicType::kByte:             { output_mesh.indices_type = GL_BYTE; } break;
+        case gltf::eBasicType::kUnsignedByte:     { output_mesh.indices_type = GL_UNSIGNED_BYTE; } break;
+        case gltf::eBasicType::kShort:            { output_mesh.indices_type = GL_SHORT; } break;
+        case gltf::eBasicType::kUnsignedShort:    { output_mesh.indices_type = GL_UNSIGNED_SHORT; } break;
+        case gltf::eBasicType::kUnsignedInt:      { output_mesh.indices_type = GL_UNSIGNED_INT; } break;
+        case gltf::eBasicType::kFloat:            { 
+            logger::log_debug("!!critical!! indices were passed in as float. runtime crash likely.",
+                              logger::eLoggingLevel::kError, 100);
+
+            output_mesh.indices_type = GL_FLOAT; 
+        } break;
+    }
+
+    // see the glTF spec 3.7.2. Meshes: https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#geometry
+    u32 texture_type = GL_FLOAT;
+    if (mesh.texture_type_0 == gltf::eBasicType::kUnsignedByte) {
+        texture_type = GL_UNSIGNED_BYTE;
+    } else if (mesh.texture_type_0 == gltf::eBasicType::kUnsignedShort) {
+        texture_type = GL_UNSIGNED_SHORT;
+    }
+
+    /// TODO: check what happens when buffer.data() == nullptr and buffer.size() == 0;
+
     GL_QUERY_ERROR(glGenVertexArrays(1, &output_mesh.vao);)
     GL_QUERY_ERROR(glBindVertexArray(output_mesh.vao);)
     GL_QUERY_ERROR(glGenBuffers(3, output_mesh.vbo);)
@@ -33,7 +61,7 @@ gMeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
     GL_QUERY_ERROR(glEnableVertexAttribArray(kNormalIndex);)
     // -------------- Texture Coord Loading -------------------
     GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, output_mesh.vbo[kTexCoordIndex]);)
-    GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.tex_data.size(), mesh.tex_data.data(), GL_STATIC_DRAW);)
+    GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.tex_data_0.size(), mesh.tex_data_0.data(), GL_STATIC_DRAW);)
     GL_QUERY_ERROR(glVertexAttribPointer(kTexCoordIndex, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);)
     GL_QUERY_ERROR(glEnableVertexAttribArray(kTexCoordIndex);)
     // -------------- Indices Loading -------------------------
@@ -96,9 +124,16 @@ gTextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
 
 gMaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
     gMaterialHandle output_material = {};
+    
+    logger::log_debug("diffuse -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map);
+    
+    logger::log_debug("metallic_roughness -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map);
+
+    logger::log_debug("normal -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.normal = load_gltf_texture_to_opengl(material.normal_map);
+
     return output_material;
 }
 
@@ -132,8 +167,13 @@ void draw_gltf_model(const gModelHandle& model, const gSceneHandle& scene, Shade
         shader.set_int("diffuse_map", material.diffuse.texture_unit);
         shader.set_int("metallic_roughness_map", material.metallic_roughness.texture_unit);
         shader.set_int("normal_map", material.normal.texture_unit);
+
         GL_QUERY_ERROR(glBindVertexArray(mesh.vao);)
-        GL_QUERY_ERROR(glDrawElements(GL_TRIANGLES, mesh.icount, GL_UNSIGNED_INT, 0);)
+        if (mesh.icount > 0) {
+            GL_QUERY_ERROR(glDrawElements(GL_TRIANGLES, mesh.icount, mesh.indices_type, 0);)
+        } else {
+            glDrawArrays(GL_TRIANGLES, 0, mesh.vcount);
+        }
         GL_QUERY_ERROR(glBindVertexArray(0);)
     }
     shader.unbind();    

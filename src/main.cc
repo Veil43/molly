@@ -9,9 +9,10 @@
 
 #include "molly_services.h"
 
-#define WINDOW_WIDTH 800.0
-#define WINDOW_HEIGHT 600.0
+#define WINDOW_WIDTH 1200.0
+#define WINDOW_ASPECT_RATIO (16.0f / 9.0f)
 #define WINDOW_TITLE "OpenGL with Molly"
+
 
 static PlatformInput 
 process_input(GLFWwindow* w, PlatformInput old_input);
@@ -19,6 +20,7 @@ static void
 glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 static GLFWwindow* sg_window_handle = nullptr;
+static f32 g_window_height = 1.0f;
 int main() {
 
     // Initialize windowing
@@ -34,7 +36,7 @@ int main() {
 
     // configure glfw window
     const float c_window_width = WINDOW_WIDTH;
-    const float c_window_height = WINDOW_HEIGHT;
+    const float c_window_height = c_window_width / WINDOW_ASPECT_RATIO;
     const char* c_window_title = WINDOW_TITLE;
     GLFWwindow* window_handle = glfwCreateWindow(
         c_window_width,
@@ -49,6 +51,7 @@ int main() {
         exit(1);
     }
     sg_window_handle = window_handle;
+    g_window_height = c_window_height;
     glfwMakeContextCurrent(window_handle);
 
     if (!gladLoadGL()) {
@@ -131,7 +134,7 @@ process_input(GLFWwindow* window_handle, PlatformInput old_input) {
 
     if (first_input) {
         old_input.mouse_x = WINDOW_WIDTH/2;
-        old_input.mouse_y = WINDOW_HEIGHT/2;
+        old_input.mouse_y = g_window_height/2;
         first_input = false;
     }
 
