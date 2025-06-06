@@ -352,7 +352,7 @@ std::vector<gltf::ModelData> load_models_from_scene(const Root& root, int scene_
 }
 
 
-gltf::Scene gltf::load_gltf_file(const std::filesystem::path& path) {
+gltf::SceneData gltf::load_gltf_file(const std::filesystem::path& path) {
     Root root;
     TinyGLTF loader;
     std::string err;
@@ -391,7 +391,7 @@ gltf::Scene gltf::load_gltf_file(const std::filesystem::path& path) {
     g_base_asset_dir = path.parent_path().string();
 
     std::vector<gltf::ModelData> models = load_models_from_scene(root, main_scene_index);
-    gltf::Scene output_scene = {};
+    gltf::SceneData output_scene = {};
     output_scene.materials = std::move(g_material_cache);
     output_scene.models = std::move(models);
 

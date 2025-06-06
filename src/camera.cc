@@ -1,5 +1,4 @@
 #include "camera.h"
-#include "utils.h"
 
 Camera::Camera(const glm::vec3& position, f32 pitch, f32 yaw, const glm::vec3& world_up)
     : m_position{position},
@@ -28,34 +27,6 @@ Camera::Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 y
     this->update_camera_vectors();
 }
 
-Camera::Camera(const Camera& other) 
-    : m_position{other.m_position},
-      m_world_up{other.m_world_up},
-      m_pitch{other.m_pitch},
-      m_yaw{other.m_yaw},
-      m_vfov{other.m_vfov},
-      m_near{other.m_near},
-      m_far{other.m_far},
-      m_aspect_ratio{other.m_aspect_ratio}
-{
-    this->update_camera_vectors();
-}
-
-Camera& Camera::operator=(const Camera& other) {
-    m_position = other.m_position;
-    m_world_up = other.m_world_up;
-    m_pitch = other.m_pitch;
-    m_yaw = other.m_yaw;
-    m_yaw = other.m_yaw;
-    m_vfov = other.m_vfov;
-    m_near = other.m_near;
-    m_far = other.m_far;
-    m_aspect_ratio = other.m_aspect_ratio;
-
-    this->update_camera_vectors();
-    return *this;
-}
-
 glm::mat4 Camera::get_view_matrix() const {
     /*
         Why pos + lookat?
@@ -69,21 +40,21 @@ glm::mat4 Camera::get_projection_matrix() const {
 }
 
 
-void Camera::process_movement_input(utils::eMovement direction, f32 delta_time) {
+void Camera::process_movement_input(eMovement direction, f32 delta_time) {
     switch (direction) {
-        case utils::eMovement::kForward : {
+        case eMovement::kForward : {
             this->m_position += this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case utils::eMovement::kBackward : {
+        case eMovement::kBackward : {
             this->m_position -= this->m_forward * this->m_movement_speed * delta_time;
         } break;
         
-        case utils::eMovement::kLeft : {
+        case eMovement::kLeft : {
             this->m_position -= this->m_right * this->m_movement_speed * delta_time;
         } break;
         
-        case utils::eMovement::kRight : {
+        case eMovement::kRight : {
             this->m_position += this->m_right * this->m_movement_speed * delta_time;
         } break;
 

@@ -42,18 +42,6 @@ struct ImageData {
     int channel_size;
 };
 
-/* 
-    Should you be in utils.h???
-    If not the where should you be
-    /// TODO: remove this out from utils
-*/
-enum class eMovement {
-    kForward,
-    kBackward,
-    kLeft,
-    kRight
-};
-
 void cmdlog(const std::string& message);
 void print_GL_info();
 std::string load_text_file(const char* path);

@@ -8,14 +8,14 @@
 #include "imgui_impl_opengl3.h"
 
 #include "molly_services.h"
+#include "input.h"
 
 #define WINDOW_WIDTH 1200.0
 #define WINDOW_ASPECT_RATIO (16.0f / 9.0f)
 #define WINDOW_TITLE "OpenGL with Molly"
 
-
-static PlatformInput 
-process_input(GLFWwindow* w, PlatformInput old_input);
+static Input 
+process_input(GLFWwindow* w, Input old_input);
 static void 
 glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -78,7 +78,7 @@ int main() {
     // -----------------------------------------------------------------------------
     molly_on_startup_call(c_window_width/c_window_height);
 
-    PlatformInput old_input = {};
+    Input old_input = {};
     while(!glfwWindowShouldClose(window_handle)) {
         glfwPollEvents();
         
@@ -90,7 +90,7 @@ int main() {
         // -----------------------------------------------------------------------
         // Call application looping code
         // -----------------------------------------------------------------------
-        PlatformInput new_input = process_input(window_handle, old_input);
+        Input new_input = process_input(window_handle, old_input);
         old_input = new_input;
         molly_render_loop(new_input);
 
@@ -109,11 +109,11 @@ int main() {
     return 0;
 }
 
-static PlatformInput 
-process_input(GLFWwindow* window_handle, PlatformInput old_input) {
+static Input 
+process_input(GLFWwindow* window_handle, Input old_input) {
     static bool first_input = true;
 
-    PlatformInput input = {};
+    Input input = {};
     input.w_key.is_down = (glfwGetKey(window_handle, GLFW_KEY_W) == GLFW_PRESS);
     input.w_key.was_down = old_input.w_key.is_down;
 

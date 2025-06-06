@@ -3,7 +3,7 @@
 
 #include "molly_math.h"
 #include "types.h"
-#include "utils.h"
+#include "input.h"
 
 class Camera {
 public:
@@ -46,15 +46,9 @@ public:
     );
     Camera(f32 pos_x, f32 pos_y, f32 pos_z, f32 world_up_z, f32 pitch, f32 yaw, f32 world_up_x, f32 world_up_y);
 
-    Camera(const Camera&);
-    Camera& operator=(const Camera&);
-
-    Camera(Camera&&) =delete;
-    Camera& operator=(Camera&&) =delete;
-
     glm::mat4 get_view_matrix() const;
     glm::mat4 get_projection_matrix() const;
-    void process_movement_input(utils::eMovement direction, f32 delta_time);
+    void process_movement_input(eMovement direction, f32 delta_time);
 
     void process_mouse_movement_input(f32 xoffset, f32 yoffset, f32 delta_time);
     void process_mouse_scroll_input(f32 yoffset);

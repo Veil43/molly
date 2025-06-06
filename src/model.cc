@@ -13,8 +13,8 @@ static int g_texture_counter = 0;
 // -----------------------------------------------------------
 // Model loading
 // -----------------------------------------------------------
-gMeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
-    gMeshHandle output_mesh = {};
+MeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
+    MeshHandle output_mesh = {};
     output_mesh.transform = mesh.transform;
     output_mesh.icount = mesh.indices_data.size();
     output_mesh.vcount = mesh.pos_data.size() / 8;      /// NOTE: to change with more attributes
@@ -75,10 +75,10 @@ gMeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
     return output_mesh;
 }
 
-gModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) {
-    gModelHandle output_model = {};
+ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) {
+    ModelHandle output_model = {};
     for (auto& m : model.meshes) {
-        gMeshHandle output_mesh = load_gltf_mesh_to_opengl(m, interleave);
+        MeshHandle output_mesh = load_gltf_mesh_to_opengl(m, interleave);
         output_model.meshes.push_back(output_mesh);
     }
 
@@ -88,16 +88,19 @@ gModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) 
 // ---------------------------------------------------------------------
 // Material Loading
 // ---------------------------------------------------------------------
-gTextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
-    gTextureHandle output_handle = {};
+/// TODO: provide default "bad" material
+// returns -1 texture and texture_unit if invalid image
+TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
+    TextureHandle output_handle = {};
 
     utils::ImageData image = utils::load_image_file(utils::resolve_path(texture.path), false);
-    
+
     if (image.data == nullptr) {
-        logger::log_debug(("could not find the path: ") + texture.path, logger::eLoggingLevel::kError, 100);
-        return output_handle;
-    } else {
-        logger::log_debug(("found path: ") + texture.path, logger::eLoggingLevel::kWarning, 100);
+        image = utils::load_image_file(utils::resolve_path("assets/textures/errorP6.ppm"));
+        if (image.data == nullptr) {
+            utils::cmdlog("ERROR: Could not locate the fallback texture after texture loading failed");
+            exit(1);
+        }
     }
 
     u32 internal_format = GL_RGBA8;
@@ -122,16 +125,11 @@ gTextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
     return output_handle;
 }
 
-gMaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
-    gMaterialHandle output_material = {};
+MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
+    MaterialHandle output_material = {};
     
-    logger::log_debug("diffuse -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map);
-    
-    logger::log_debug("metallic_roughness -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map);
-
-    logger::log_debug("normal -- load", logger::eLoggingLevel::kInfo, 100);
     output_material.normal = load_gltf_texture_to_opengl(material.normal_map);
 
     return output_material;
@@ -140,8 +138,8 @@ gMaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
 // ---------------------------------------------------------------------
 // Scene Loading
 // ---------------------------------------------------------------------
-gSceneHandle load_gltf_scene_to_opengl(gltf::Scene& s, bool interleave) {
-    gSceneHandle output_scene = {};
+SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& s, bool interleave) {
+    SceneHandle output_scene = {};
     output_scene.models.reserve(s.models.size());
     for (auto& m : s.models) {
         output_scene.models.push_back(load_gltf_model_to_opengl(m, interleave));
@@ -159,11 +157,12 @@ gSceneHandle load_gltf_scene_to_opengl(gltf::Scene& s, bool interleave) {
 // ---------------------------------------------------------------------
 // Drawing
 // ---------------------------------------------------------------------
-void draw_gltf_model(const gModelHandle& model, const gSceneHandle& scene, Shader& shader) {
+void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Shader& shader) {
     shader.bind();
     for (auto& mesh : model.meshes) {
-        const gMaterialHandle& material = scene.materials.at(mesh.material_index);
+        const MaterialHandle& material = scene.materials.at(mesh.material_index);
         shader.set_mat4f("model", mesh.transform);
+
         shader.set_int("diffuse_map", material.diffuse.texture_unit);
         shader.set_int("metallic_roughness_map", material.metallic_roughness.texture_unit);
         shader.set_int("normal_map", material.normal.texture_unit);
@@ -179,7 +178,7 @@ void draw_gltf_model(const gModelHandle& model, const gSceneHandle& scene, Shade
     shader.unbind();    
 }
 
-void draw_gltf_scene(const gSceneHandle& scene, Shader& shader) {
+void draw_gltf_scene(const SceneHandle& scene, Shader& shader) {
     for (const auto& m : scene.models) {
         draw_gltf_model(m, scene, shader);
     }

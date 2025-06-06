@@ -52,11 +52,11 @@ struct ModelData {
     std::vector<MeshData> meshes;
 };
 
-struct Scene {
+struct SceneData {
     std::vector<ModelData> models;
     std::map<int, MaterialInfo> materials;
 };
 
-Scene load_gltf_file(const std::filesystem::path& path);
+SceneData load_gltf_file(const std::filesystem::path& path);
 
 } // namespace gltf
