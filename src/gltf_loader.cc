@@ -392,7 +392,12 @@ gltf::SceneData gltf::load_gltf_file(const std::filesystem::path& path) {
 
     std::vector<gltf::ModelData> models = load_models_from_scene(root, main_scene_index);
     gltf::SceneData output_scene = {};
-    output_scene.materials = std::move(g_material_cache);
+    
+    output_scene.materials.reserve(g_material_cache.size());
+    output_scene.materials.resize(g_material_cache.size());
+    for (auto& [index, material] : g_material_cache) {
+        output_scene.materials[index] = material;
+    }
     output_scene.models = std::move(models);
 
     g_base_asset_dir = "";

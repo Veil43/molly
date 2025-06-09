@@ -19,7 +19,7 @@ void main() {
     vec3 light_dir = normalize(point_light1_position - surface_point);
 
     float amb = 0.0;
-    float diff = dot(light_dir, normal);
+    float diff = max(dot(light_dir, normal), 0.0);
     
     vec3 color = vec3(texture(diffuse_map, tex_coord)) * diff;
     color += vec3(texture(diffuse_map, tex_coord)) * amb;

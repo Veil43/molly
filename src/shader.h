@@ -8,16 +8,8 @@ class Shader {
 public:
     u32 m_id;
 
-    Shader(const Shader&) =delete;
-    Shader& operator=(const Shader&) =delete;
-
     Shader() noexcept;
-    Shader(const char* vertex_source, const char* fragment_source);
-
-    Shader(Shader&& other) noexcept;
-    Shader& operator=(Shader&& other) noexcept;
-
-    ~Shader();
+    Shader(const std::string& vertex_source, const std::string& fragment_source);
 
     void set_int(const std::string& name, i32 value) const ;
     void set_float(const std::string& name, f32 value) const ;
@@ -30,5 +22,8 @@ public:
     void bind() const;
     void unbind() const;
 };
+
+Shader request_shader_of_name(const std::string& shader_name);
+void   register_shader_with_name(const std::string& shader_name, Shader shader);
 
 #endif // RASTERTOY_SHADER_H

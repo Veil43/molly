@@ -6,6 +6,7 @@
 #include "model.h"
 #include "utils.h"
 #include "logger.h"
+#include "shader.h"
 
 /// TODO: please figure out a more robust way to handle texture counts than this.
 static int g_texture_counter = 0;
@@ -88,8 +89,6 @@ ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) {
 // ---------------------------------------------------------------------
 // Material Loading
 // ---------------------------------------------------------------------
-/// TODO: provide default "bad" material
-// returns -1 texture and texture_unit if invalid image
 TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
     TextureHandle output_handle = {};
 
@@ -147,8 +146,10 @@ SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& s, bool interleave) {
 
     /// TODO: see if pre-allocating makes any difference here 
     // (we won't be having HUGE numbers of materials)
+    output_scene.materials.reserve(s.materials.size());
     for (auto& m : s.materials) {
-        output_scene.materials[m.first] = load_gltf_material_to_opengl(m.second);
+        MaterialHandle gl_material = load_gltf_material_to_opengl(m);
+        output_scene.materials.push_back(gl_material);
     }
 
     return output_scene;
@@ -157,11 +158,18 @@ SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& s, bool interleave) {
 // ---------------------------------------------------------------------
 // Drawing
 // ---------------------------------------------------------------------
-void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Shader& shader) {
-    shader.bind();
+void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera& camera, glm::vec3& light1_position) {
     for (auto& mesh : model.meshes) {
         const MaterialHandle& material = scene.materials.at(mesh.material_index);
+        /// TODO: requeest the shader fromthe 
+        Shader shader = request_shader_of_name(material.shader_name);
+
+        shader.bind();
         shader.set_mat4f("model", mesh.transform);
+        shader.set_mat4f("view", camera.get_view_matrix());
+        shader.set_mat4f("projection", camera.get_projection_matrix());
+
+        shader.set_vec3f("point_light1_position", light1_position);
 
         shader.set_int("diffuse_map", material.diffuse.texture_unit);
         shader.set_int("metallic_roughness_map", material.metallic_roughness.texture_unit);
@@ -174,12 +182,17 @@ void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Shader&
             glDrawArrays(GL_TRIANGLES, 0, mesh.vcount);
         }
         GL_QUERY_ERROR(glBindVertexArray(0);)
+        shader.unbind();    
     }
-    shader.unbind();    
 }
 
-void draw_gltf_scene(const SceneHandle& scene, Shader& shader) {
+void draw_gltf_scene(const SceneHandle& scene, Camera& camera, glm::vec3& light1_position) {
     for (const auto& m : scene.models) {
-        draw_gltf_model(m, scene, shader);
+        draw_gltf_model(m, scene, camera, light1_position);
     }
+}
+
+//
+void draw_molly_scene(Scene& scene) {
+    draw_gltf_scene(scene.handle, scene.camera, scene.light1.position);
 }

@@ -1,8 +1,13 @@
 #define MOLLY_HAS_GL
 #include <glad/glad.h>
 #include <string>
+#include <map>
+
 #include "shader.h"
 #include "utils.h"
+
+
+inline std::map<std::string, Shader> g_shaders = {};
 
 /*
     @brief OpenGL util to compile shaders.
@@ -36,9 +41,9 @@ Shader::Shader() noexcept
     : m_id{0}
 {}
 
-Shader::Shader(const char* vpath, const char* fpath) {
-    const std::string vsource = utils::load_text_file(vpath);
-    const std::string fsource = utils::load_text_file(fpath);
+Shader::Shader(const std::string& vpath, const std::string& fpath) {
+    const std::string vsource = utils::load_text_file(vpath.c_str());
+    const std::string fsource = utils::load_text_file(fpath.c_str());
     GL_QUERY_ERROR(u32 vshader = glCreateShader(GL_VERTEX_SHADER);)
     GL_QUERY_ERROR(u32 fshader = glCreateShader(GL_FRAGMENT_SHADER);)
     compile_shader(vshader, 0, vsource.c_str());
@@ -56,28 +61,6 @@ Shader::Shader(const char* vpath, const char* fpath) {
     }
     GL_QUERY_ERROR(glDeleteShader(vshader);)
     GL_QUERY_ERROR(glDeleteShader(fshader);)
-}
-
-Shader::Shader(Shader&& other) noexcept {
-    if (this != &other) {
-        this->m_id = other.m_id;
-        other.m_id = 0;
-    }
-}
-
-Shader& Shader::operator=(Shader&& other) noexcept {
-    if (this != &other) {
-        this->m_id = other.m_id;
-        other.m_id = 0;
-    }
-    return *this;
-}
-
-Shader::~Shader() {
-    if (m_id) {
-        GL_QUERY_ERROR(glDeleteProgram(m_id);)
-        m_id = 0;
-    }
 }
 
 void Shader::set_int(const std::string& name, i32 value) const {
@@ -115,4 +98,17 @@ void Shader::bind() const {
 
 void Shader::unbind() const {
     GL_QUERY_ERROR(glUseProgram(0);)
+}
+
+Shader request_shader_of_name(const std::string& shader_name) {
+    Shader output_shader = {};
+    auto it = g_shaders.find(shader_name);
+    if ( it != g_shaders.end()) {
+        return it->second;
+    }
+    return output_shader;
+}
+
+void register_shader_with_name(const std::string& shader_name, Shader shader) {
+    g_shaders[shader_name] = shader;
 }

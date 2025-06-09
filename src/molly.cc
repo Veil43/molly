@@ -14,8 +14,7 @@
 #include "logger.h"
 #include "gltf_loader.h"
 #include "input.h"
-
-/// TODO: give the point light a cube body which is defined in molly.h::cube
+#include "scene.h"
 
 class State {
     u64 bitmap;
@@ -41,32 +40,11 @@ public:
     }
 };
 
-struct Light {
-    enum class eLightType {
-        kPoint,
-        kDirectional,
-        kSpot,
-    };
-
-    eLightType type;
-    glm::vec3 direction;
-    glm::vec3 position;
-};
-
-struct Scene {
-    SceneHandle handle;
-    Camera camera;
-    Light light1; // simple point light
-    Light light2;
-    Light light3;
-};
-
 static bool key_press(InputKey& k);
 static bool key_hold(InputKey& k);
 static bool key_release(InputKey& k);
 static void imgui_debug_pannel(); /// TODO: add a debug pannel that allows us to change state at will
 
-static Shader shader{};
 static Scene main_scene = {};
 static State global_state = {};
 
@@ -78,9 +56,19 @@ void molly_on_startup_call(f32 aspect_ratio) {
 
     // ------------- I/O operations ---------------------
     gltf::SceneData gltf_scene_data = gltf::load_gltf_file(utils::resolve_path("assets/models/Sponza/glTF/Sponza.gltf"));
-    shader = Shader(utils::resolve_path("src/shaders/vmr_phong.glsl").c_str(), utils::resolve_path("src/shaders/fmr_phong.glsl").c_str());
+    Shader mr_phong_shader = Shader(utils::resolve_path("src/shaders/vmr_phong.glsl"), utils::resolve_path("src/shaders/fmr_phong.glsl"));
+    Shader plain_white_shader = Shader(utils::resolve_path("src/shaders/vplain_white.glsl"), utils::resolve_path("src/shaders/fplain_white.glsl"));
+
+    register_shader_with_name("mr_phong", mr_phong_shader);
+    register_shader_with_name("plain_white", plain_white_shader);
+
+    gltf_scene_data.materials.push_back(cube::material);
+    gltf::ModelData cube_model = cube::get_cube_model(gltf_scene_data.materials.size()-1);
+    gltf_scene_data.models.push_back(cube_model);
 
     main_scene.handle = load_gltf_scene_to_opengl(gltf_scene_data, false);
+    /// NOTE: This is hacky but brother when you gotta go you gotta go
+    main_scene.handle.materials.back().shader_name = "plain_white";
     main_scene.camera = Camera(glm::vec3(0.0, 0.0, 1.0));
     
     main_scene.light1.type = Light::eLightType::kPoint;
@@ -132,13 +120,14 @@ void molly_render_loop(Input input) {
     glm::mat4 projection = main_scene.camera.get_projection_matrix();
     
     // DRAW!!!!
-    shader.bind();
-    shader.set_mat4f("view", view);
-    shader.set_mat4f("projection", projection);
-    shader.set_vec3f("point_light1_position", main_scene.light1.position);
-    draw_gltf_scene(main_scene.handle, shader);
-    shader.unbind();
-       
+
+    // give the point light a body
+    auto& cube_model = main_scene.handle.models.back();
+    glm::vec3 cube_position = molly_get_translation(cube_model.meshes[0].transform);
+    cube_model.meshes[0].transform = glm::translate(cube_model.meshes[0].transform, main_scene.light1.position - cube_position);
+
+    draw_molly_scene(main_scene);
+
     // -------------------------- Timing Information --------------------------
 #ifdef MOLLY_DEBUG
     static u32 frame_count = 0;
@@ -151,7 +140,7 @@ void molly_render_loop(Input input) {
     if (time_accumilator >= 1.0) {
         fps = static_cast<u32>(frame_count / time_accumilator);
         old_fps = fps;
-        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps) 
+        std::string timing = "[1s] Avg frame time: " + std::to_string(1000 * time_accumilator/frame_count) + "ms |  [1s] Avg frames per second: " + std::to_string(fps)
         + " | Primitive Count: " + std::to_string(/*backpack.size()*/0);
         // logger::log_debug(timing, logger::eLoggingLevel::kInfo, 3.0);
         time_accumilator = 0.0;

@@ -38,6 +38,9 @@ struct MaterialInfo {
 struct MeshData {
     std::string name;
     glm::mat4 transform;
+    // glm::vec3 position;
+    // glm::vec3 scale;
+    // glm::quat rotation;
     std::vector<unsigned char> pos_data;
     std::vector<unsigned char> nor_data;
     std::vector<unsigned char> tex_data_0;
@@ -54,7 +57,7 @@ struct ModelData {
 
 struct SceneData {
     std::vector<ModelData> models;
-    std::map<int, MaterialInfo> materials;
+    std::vector<MaterialInfo> materials;
 };
 
 SceneData load_gltf_file(const std::filesystem::path& path);
