@@ -177,7 +177,6 @@ load_primitive_meshes(const Root& root, int mesh_id) {
         // ----------------------------------------------------
         // Material
         // ----------------------------------------------------
-        /// TODO: maybe see if tinygltf already loads image data 
         gltf::MaterialInfo curr_material;
         assert(primitive.material >= 0);
         const Material& material =  root.materials[primitive.material];

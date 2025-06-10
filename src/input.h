@@ -34,4 +34,6 @@ struct Input {
     InputKey d_key;
     InputKey esc_key;
     InputKey lctrl_key;
+    InputKey rmb;
+    InputKey lmb;
 };

@@ -14,7 +14,6 @@
 #include "logger.h"
 #include "gltf_loader.h"
 #include "input.h"
-#include "scene.h"
 
 class State {
     u64 bitmap;
@@ -52,11 +51,12 @@ static State global_state = {};
 void molly_on_startup_call(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
+    GL_QUERY_ERROR(glDepthFunc(GL_LESS);)
     // -- Platform Configurations --
     platform_disable_mouse_cursor();
 
     // ------------- I/O operations ---------------------
-    gltf::SceneData gltf_scene_data = gltf::load_gltf_file(utils::resolve_path("assets/models/survival_guitar_backpack/scene.gltf"));
+    gltf::SceneData gltf_scene_data = gltf::load_gltf_file(utils::resolve_path("assets/models/Sponza/glTF/Sponza.gltf"));
     Shader mr_phong_shader = Shader(utils::resolve_path("src/shaders/vmr_phong.glsl"), utils::resolve_path("src/shaders/fmr_phong.glsl"));
     Shader plain_white_shader = Shader(utils::resolve_path("src/shaders/vplain_white.glsl"), utils::resolve_path("src/shaders/fplain_white.glsl"));
 
@@ -71,15 +71,15 @@ void molly_on_startup_call(f32 aspect_ratio) {
     /// NOTE: This is hacky but brother when you gotta go you gotta go
     main_scene.handle.materials.back().shader_name = "plain_white";
     
-    main_scene.camera = Camera(glm::vec3(0.0, 0.0, 1.0));
+    main_scene.camera = Camera(glm::vec3(0.0, 0.0, 0.0));
     
     main_scene.light1.type = Light::eLightType::kPoint;
-    main_scene.light1.position = glm::vec3(1.0);
+    main_scene.light1.position = glm::vec3(1.0f);
 
-    main_scene.transform.scale = glm::vec3(0.05f);
+    main_scene.transform.scale = glm::vec3(1.0f);
     main_scene.camera.m_movement_speed = 10.0f;
     main_scene.camera.m_position = glm::vec3(0.0f,0.0f,0.0f);
-    main_scene.camera.m_far = 10000.0f;
+    main_scene.camera.m_far = 1000.0f;
 }
 
 void molly_render_loop(Input input) {
@@ -100,18 +100,17 @@ void molly_render_loop(Input input) {
     }
     if (key_press(input.d_key) || key_hold(input.d_key)) {
         main_scene.camera.process_movement_input(eMovement::kRight, delta_time);
-    } 
+    }
     if (key_press(input.esc_key)) {
         global_state.set_app_should_close(true);
     }
-    if (key_press(input.lctrl_key)) {
-        if (!global_state.mouse_is_visible()) {
-            global_state.set_mouse_visibility(true);
-            platform_enable_mouse_cursor();
-        } else {
-            global_state.set_mouse_visibility(false);
-            platform_disable_mouse_cursor();
-        }
+    if (key_hold(input.rmb)) {
+        // logger::log_debug("RIGHT", logger::eLoggingLevel::kError, 30.0f);
+        global_state.set_mouse_visibility(false);
+        platform_disable_mouse_cursor();
+    } else {
+        global_state.set_mouse_visibility(true);
+        platform_enable_mouse_cursor();
     }
 
     // Should we process the mouse input?
@@ -123,7 +122,7 @@ void molly_render_loop(Input input) {
     // give the point light a body
     auto& cube_model = main_scene.handle.models.back();
     cube_model.meshes[0].transform.translation = main_scene.light1.position;
-    cube_model.meshes[0].transform.scale = glm::vec3(1.0/main_scene.transform.scale.x);
+    cube_model.meshes[0].transform.scale = glm::vec3(2.0/main_scene.transform.scale.x);
 
     draw_molly_scene(main_scene);
 
@@ -182,9 +181,14 @@ static void imgui_debug_pannel() {
 
     if (ImGui::CollapsingHeader("Objects")) {
         ImGui::Text("Point Light:");
-        ImGui::DragFloat3("##Position", &main_scene.light1.position.x, 0.1f);
+        ImGui::DragFloat3("##Position", &main_scene.light1.position.x, 10.0f);
         ImGui::Text("Scene Scale");
         ImGui::DragFloat3("##Scale", &main_scene.transform.scale.x, 0.1f);
+    }
+
+    if (ImGui::CollapsingHeader("Camera Config")) {
+        ImGui::Text("Far");
+        ImGui::DragFloat("##Far", &main_scene.camera.m_far, 1.0f);
     }
 
     ImGui::End();

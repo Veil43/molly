@@ -89,12 +89,13 @@ ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) {
 // ---------------------------------------------------------------------
 // Material Loading
 // ---------------------------------------------------------------------
-TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
+TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture, const std::string& name = "none") {
     TextureHandle output_handle = {};
 
     utils::ImageData image = utils::load_image_file(utils::resolve_path(texture.path), false);
 
     if (image.data == nullptr) {
+        logger::log_debug(name, logger::eLoggingLevel::kWarning, 20.0f);
         image = utils::load_image_file(utils::resolve_path("assets/textures/errorP6.ppm"));
         if (image.data == nullptr) {
             utils::cmdlog("ERROR: Could not locate the fallback texture after texture loading failed");
@@ -106,12 +107,16 @@ TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
     if (image.channel_count == 3) {
         internal_format = GL_RGB8;
     }
+    u32 format = GL_RGBA;
+    if (image.channel_count == 3) {
+        format = GL_RGB;
+    }
 
     GL_QUERY_ERROR(glGenTextures(1, &output_handle.texture);)
     GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + g_texture_counter);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, output_handle.texture);)
     
-    GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, image.data);)
+    GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.width, image.height, 0, format, GL_UNSIGNED_BYTE, image.data);)
     GL_QUERY_ERROR(glGenerateMipmap(GL_TEXTURE_2D);)
 
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);)
@@ -127,9 +132,9 @@ TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture) {
 MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
     MaterialHandle output_material = {};
     
-    output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map);
-    output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map);
-    output_material.normal = load_gltf_texture_to_opengl(material.normal_map);
+    output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map, material.name + " diffuse");
+    output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map, material.name + " metallic_roughness");
+    output_material.normal = load_gltf_texture_to_opengl(material.normal_map, material.name + " normal");
 
     return output_material;
 }
@@ -137,17 +142,21 @@ MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
 // ---------------------------------------------------------------------
 // Scene Loading
 // ---------------------------------------------------------------------
-SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& s, bool interleave) {
+SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& scene, bool interleave) {
     SceneHandle output_scene = {};
-    output_scene.models.reserve(s.models.size());
-    for (auto& m : s.models) {
+    output_scene.models.reserve(scene.models.size());
+    for (auto& m : scene.models) {
         output_scene.models.push_back(load_gltf_model_to_opengl(m, interleave));
     }
 
     /// TODO: see if pre-allocating makes any difference here 
     // (we won't be having HUGE numbers of materials)
-    output_scene.materials.reserve(s.materials.size());
-    for (auto& m : s.materials) {
+    logger::log_debug(std::to_string(scene.materials.size()) + " materials in scene", 
+                      logger::eLoggingLevel::kWarning,
+                      20.0f);
+
+    output_scene.materials.reserve(scene.materials.size());
+    for (auto& m : scene.materials) {
         MaterialHandle gl_material = load_gltf_material_to_opengl(m);
         output_scene.materials.push_back(gl_material);
     }

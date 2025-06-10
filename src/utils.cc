@@ -77,9 +77,7 @@ utils::ImageData utils::load_image_file(const std::string& path, bool flip) {
     int y = 0;
     int c = 0;
     
-    if (flip) {
-        stbi_set_flip_vertically_on_load(1);
-    }
+    stbi_set_flip_vertically_on_load(flip);
 
     unsigned char* data = stbi_load(path.c_str(), &x, &y, &c, 0);
     if (!data) {

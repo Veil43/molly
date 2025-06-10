@@ -18,6 +18,8 @@ static Input
 process_input(GLFWwindow* w, Input old_input);
 static void 
 glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+static void
+glfw_resize_callback(GLFWwindow* window_handle, int width, int height);
 
 static GLFWwindow* sg_window_handle = nullptr;
 static f32 g_window_height = 1.0f;
@@ -61,7 +63,7 @@ int main() {
     }
 
     // glfwSetKeyCallback(window_handle);
-    // glfwSetFramebufferSizeCallback(window_handle);
+    glfwSetFramebufferSizeCallback(window_handle, glfw_resize_callback);
     glfwSetScrollCallback(window_handle, glfw_scroll_callback);
 
     IMGUI_CHECKVERSION();
@@ -132,6 +134,12 @@ process_input(GLFWwindow* window_handle, Input old_input) {
     input.lctrl_key.is_down = (glfwGetKey(window_handle, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS);
     input.lctrl_key.was_down = old_input.lctrl_key.is_down;
 
+    input.rmb.is_down = (glfwGetMouseButton(window_handle, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+    input.rmb.was_down = old_input.rmb.is_down;
+    
+    input.lmb.is_down = (glfwGetMouseButton(window_handle, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    input.lmb.was_down = old_input.lmb.is_down;
+
     if (first_input) {
         old_input.mouse_x = WINDOW_WIDTH/2;
         old_input.mouse_y = g_window_height/2;
@@ -153,6 +161,13 @@ process_input(GLFWwindow* window_handle, Input old_input) {
 static void
 glfw_scroll_callback(GLFWwindow* window_handle, double xoffset, double yoffset) {
     molly_mouse_scroll(static_cast<float>(yoffset));
+}
+
+static void
+glfw_resize_callback(GLFWwindow* window_handle, int width, int height) {
+    f32 new_height = width / WINDOW_ASPECT_RATIO;
+
+    glViewport(0, 0, width, height);
 }
 
 // ------------------------------------------------------------------------------
