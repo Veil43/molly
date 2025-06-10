@@ -37,10 +37,7 @@ struct MaterialInfo {
 
 struct MeshData {
     std::string name;
-    glm::mat4 transform;
-    // glm::vec3 position;
-    // glm::vec3 scale;
-    // glm::quat rotation;
+    Transform transform;
     std::vector<unsigned char> pos_data;
     std::vector<unsigned char> nor_data;
     std::vector<unsigned char> tex_data_0;

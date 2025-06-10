@@ -46,6 +46,7 @@ static bool key_release(InputKey& k);
 static void imgui_debug_pannel(); /// TODO: add a debug pannel that allows us to change state at will
 
 static Scene main_scene = {};
+static Scene scene2;
 static State global_state = {};
 
 void molly_on_startup_call(f32 aspect_ratio) {
@@ -55,7 +56,7 @@ void molly_on_startup_call(f32 aspect_ratio) {
     platform_disable_mouse_cursor();
 
     // ------------- I/O operations ---------------------
-    gltf::SceneData gltf_scene_data = gltf::load_gltf_file(utils::resolve_path("assets/models/Sponza/glTF/Sponza.gltf"));
+    gltf::SceneData gltf_scene_data = gltf::load_gltf_file(utils::resolve_path("assets/models/survival_guitar_backpack/scene.gltf"));
     Shader mr_phong_shader = Shader(utils::resolve_path("src/shaders/vmr_phong.glsl"), utils::resolve_path("src/shaders/fmr_phong.glsl"));
     Shader plain_white_shader = Shader(utils::resolve_path("src/shaders/vplain_white.glsl"), utils::resolve_path("src/shaders/fplain_white.glsl"));
 
@@ -65,15 +66,17 @@ void molly_on_startup_call(f32 aspect_ratio) {
     gltf_scene_data.materials.push_back(cube::material);
     gltf::ModelData cube_model = cube::get_cube_model(gltf_scene_data.materials.size()-1);
     gltf_scene_data.models.push_back(cube_model);
-
+    
     main_scene.handle = load_gltf_scene_to_opengl(gltf_scene_data, false);
     /// NOTE: This is hacky but brother when you gotta go you gotta go
     main_scene.handle.materials.back().shader_name = "plain_white";
+    
     main_scene.camera = Camera(glm::vec3(0.0, 0.0, 1.0));
     
     main_scene.light1.type = Light::eLightType::kPoint;
     main_scene.light1.position = glm::vec3(1.0);
 
+    main_scene.transform.scale = glm::vec3(0.05f);
     main_scene.camera.m_movement_speed = 10.0f;
     main_scene.camera.m_position = glm::vec3(0.0f,0.0f,0.0f);
     main_scene.camera.m_far = 10000.0f;
@@ -116,15 +119,11 @@ void molly_render_loop(Input input) {
         main_scene.camera.process_mouse_movement_input(input.mouse_x - input.mouse_prevx, input.mouse_prevy - input.mouse_y, delta_time);
     }
 
-    glm::mat4 view = main_scene.camera.get_view_matrix();
-    glm::mat4 projection = main_scene.camera.get_projection_matrix();
-    
     // DRAW!!!!
-
     // give the point light a body
     auto& cube_model = main_scene.handle.models.back();
-    glm::vec3 cube_position = molly_get_translation(cube_model.meshes[0].transform);
-    cube_model.meshes[0].transform = glm::translate(cube_model.meshes[0].transform, main_scene.light1.position - cube_position);
+    cube_model.meshes[0].transform.translation = main_scene.light1.position;
+    cube_model.meshes[0].transform.scale = glm::vec3(1.0/main_scene.transform.scale.x);
 
     draw_molly_scene(main_scene);
 
@@ -184,6 +183,8 @@ static void imgui_debug_pannel() {
     if (ImGui::CollapsingHeader("Objects")) {
         ImGui::Text("Point Light:");
         ImGui::DragFloat3("##Position", &main_scene.light1.position.x, 0.1f);
+        ImGui::Text("Scene Scale");
+        ImGui::DragFloat3("##Scale", &main_scene.transform.scale.x, 0.1f);
     }
 
     ImGui::End();

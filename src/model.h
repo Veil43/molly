@@ -20,10 +20,7 @@ struct Vertex {
 // glTF
 // -----------------------------------------
 struct MeshHandle {
-    glm::mat4 transform;
-    // glm::vec3 position;
-    // glm::vec3 scale;
-    // glm::quat rotation;
+    Transform transform;
     u32 vbo[3];
     u32 vao;
     u32 ebo;
@@ -80,6 +77,7 @@ struct Light {
 struct Scene {
     SceneHandle handle;
     Camera camera;
+    Transform transform = {};
     Light light1; // simple point light
     Light light2;
     Light light3;

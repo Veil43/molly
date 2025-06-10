@@ -16,6 +16,12 @@ uniform float roughness_factor;
 uniform vec3 point_light1_position;
 
 void main() {
+    vec3 nor = vec3(texture(normal_map, tex_coord));
+    if (nor == vec3(0.0)) {
+        nor = normal;
+    }
+    nor = normalize(nor);
+
     vec3 light_dir = normalize(point_light1_position - surface_point);
 
     float amb = 0.0;
@@ -23,6 +29,6 @@ void main() {
     
     vec3 color = vec3(texture(diffuse_map, tex_coord)) * diff;
     color += vec3(texture(diffuse_map, tex_coord)) * amb;
-    
+
     FragColor = vec4(color, 1.0);
 }

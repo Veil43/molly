@@ -205,7 +205,7 @@ load_primitive_meshes(const Root& root, int mesh_id) {
 }
 
 static std::vector<gltf::MeshData>
-load_meshes_from_node(const Root& root, int node_id, glm::mat4 parent_transform = glm::mat4(1.0f)) {
+load_meshes_from_node(const Root& root, int node_id, Transform parent_transform) {
     /*- Node
         - Mesh
         - rotation - quaternion
@@ -219,37 +219,44 @@ load_meshes_from_node(const Root& root, int node_id, glm::mat4 parent_transform 
     const Node& curr_node = root.nodes[node_id];
     
     // Grab the transform information
-    glm::mat4 local_transform = glm::mat4(1.0f);
+    Transform local_transform;
     if (curr_node.matrix.size() == 16) {
         const std::vector<double>& m = curr_node.matrix;
-        local_transform = glm::mat4{
+        glm::mat4 matrix = glm::mat4{
             m[0],  m[1],  m[2],  m[3],
             m[4],  m[5],  m[6],  m[7],
             m[8],  m[9],  m[10], m[11],
             m[12], m[13], m[14], m[15]
         };
-    } else {
-        glm::mat4 rotation = glm::mat4(1.0f);
-        glm::vec3 scale = glm::vec3(1.0f);
-        glm::vec3 translation = glm::vec3(0.0f);
 
-        if (curr_node.rotation.size() == 4) {
-            glm::quat qrot = glm::quat(curr_node.rotation[0], curr_node.rotation[1], curr_node.rotation[2], curr_node.rotation[3]);
-            rotation = glm::mat4(qrot);
-        }
-        if (curr_node.scale.size() == 3) {
-            scale = glm::vec3(curr_node.scale[0], curr_node.scale[1], curr_node.scale[2]);
-        }
-        if (curr_node.translation.size() == 3) {
-            translation = glm::vec3(curr_node.translation[0], curr_node.translation[1], curr_node.translation[2]);
+        glm::vec3 scale;
+        glm::quat rotation;
+        glm::vec3 translation;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+
+        bool success = glm::decompose(matrix, scale, rotation, translation, skew, perspective);
+        if (success) {
+            local_transform.scale = scale;
+            local_transform.translation = translation;
+            local_transform.rotation = rotation;
+        } else {
+            logger::log_debug("failed to load a matrix from data defaulting to mat4(1.0)",
+                              logger::eLoggingLevel::kError, 20.0);
         }
         
-        local_transform = rotation;
-        local_transform = glm::scale(local_transform, scale);
-        local_transform = glm::translate(local_transform, translation);
-        assert(local_transform != glm::mat4(0.0f));
+    } else {
+        if (curr_node.rotation.size() == 4) {
+            local_transform.rotation = glm::quat(curr_node.rotation[3], curr_node.rotation[0], curr_node.rotation[1], curr_node.rotation[2]);
+        }
+        if (curr_node.scale.size() == 3) {
+            local_transform.scale = glm::vec3(curr_node.scale[0], curr_node.scale[1], curr_node.scale[2]);
+        }
+        if (curr_node.translation.size() == 3) {
+            local_transform.translation = glm::vec3(curr_node.translation[0], curr_node.translation[1], curr_node.translation[2]);
+        }
     }
-    glm::mat4 curr_mesh_transform = parent_transform * local_transform;
+    Transform curr_mesh_transform = compose(parent_transform, local_transform);
     
     // Load the primitives in the current node's mesh
     std::vector<gltf::MeshData> output_meshes = {};
@@ -337,7 +344,7 @@ std::vector<gltf::ModelData> load_models_from_scene(const Root& root, int scene_
 
     // Parsing top level nodes and turning them into model data
     for (auto& node_id : scene.nodes) {
-        std::vector<gltf::MeshData> meshes = load_meshes_from_node(root, node_id, glm::mat4(1.0f));
+        std::vector<gltf::MeshData> meshes = load_meshes_from_node(root, node_id, Transform{});
         gltf::ModelData model = {};
         model.name = root.nodes[node_id].name;
 

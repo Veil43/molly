@@ -158,14 +158,17 @@ SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& s, bool interleave) {
 // ---------------------------------------------------------------------
 // Drawing
 // ---------------------------------------------------------------------
-void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera& camera, glm::vec3& light1_position) {
+void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera& camera, glm::vec3& light1_position, Transform& scene_transform) {
     for (auto& mesh : model.meshes) {
         const MaterialHandle& material = scene.materials.at(mesh.material_index);
-        /// TODO: requeest the shader fromthe 
+
         Shader shader = request_shader_of_name(material.shader_name);
 
         shader.bind();
-        shader.set_mat4f("model", mesh.transform);
+        Transform object_transform = compose(scene_transform, mesh.transform);
+        glm::mat4 model = object_transform.to_mat4();
+
+        shader.set_mat4f("model", model);
         shader.set_mat4f("view", camera.get_view_matrix());
         shader.set_mat4f("projection", camera.get_projection_matrix());
 
@@ -186,13 +189,14 @@ void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera&
     }
 }
 
-void draw_gltf_scene(const SceneHandle& scene, Camera& camera, glm::vec3& light1_position) {
+void draw_gltf_scene(const SceneHandle& scene, Camera& camera, glm::vec3& light1_position, Transform& parent_transform) {
     for (const auto& m : scene.models) {
-        draw_gltf_model(m, scene, camera, light1_position);
+        draw_gltf_model(m, scene, camera, light1_position, parent_transform);
     }
 }
 
 //
 void draw_molly_scene(Scene& scene) {
-    draw_gltf_scene(scene.handle, scene.camera, scene.light1.position);
+    Transform transform = scene.transform;
+    draw_gltf_scene(scene.handle, scene.camera, scene.light1.position, transform);
 }

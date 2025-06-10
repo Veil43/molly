@@ -161,10 +161,8 @@ inline gltf::ModelData get_cube_model(int material_index) {
 
     gltf::MeshData mesh = {};
     mesh.name = std::string("cube_body");
-    mesh.transform = glm::mat4(1.0f);
-    // mesh.position = glm::vec3(0.0);
-    // mesh.scale = glm::vec3(0.0);
-    // mesh.rotation = glm::quat();
+    mesh.transform = {};
+
     mesh.pos_data = std::move(positions);
     mesh.nor_data = std::move(normals);
     mesh.tex_data_0 = std::move(tex_coords);
