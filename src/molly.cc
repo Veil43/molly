@@ -52,6 +52,7 @@ void molly_on_startup_call(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
     GL_QUERY_ERROR(glDepthFunc(GL_LESS);)
+    // GL_QUERY_ERROR(glEnable(GL_STENCIL_TEST);)
     // -- Platform Configurations --
     platform_disable_mouse_cursor();
 
@@ -87,7 +88,7 @@ void molly_render_loop(Input input) {
     delta_time = platform_measure_time_elapsed(false);
 
     GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
-    GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);)
+    GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
 
     if (key_press(input.w_key) || key_hold(input.w_key)) {
         main_scene.camera.process_movement_input(eMovement::kForward, delta_time);
@@ -192,7 +193,9 @@ static void imgui_debug_pannel() {
         ImGui::Text("Far");
         ImGui::DragFloat("##Far", &main_scene.camera.m_far, 1.0f);
         ImGui::Text("Mouse Sensitivity");
-        ImGui::DragFloat("##MouseSensitivity", &main_scene.camera.m_movement_speed, 1.0f);
+        ImGui::DragFloat("##MouseSensitivity", &main_scene.camera.m_mouse_sensitivity, 1.0f);
+        ImGui::Text("Movement Speed");
+        ImGui::DragFloat("##MovementSpeed", &main_scene.camera.m_movement_speed, 1.0f);
     }
 
     ImGui::End();

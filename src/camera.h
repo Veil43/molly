@@ -37,6 +37,7 @@ public:
     f32 m_yaw;
 
     f32 m_movement_speed = kDefaultMovementSpeed;
+    f32 m_mouse_sensitivity = kDefaultMouseSensitivity;
 
     Camera(
         const glm::vec3& position   = kDefaultPosition, 

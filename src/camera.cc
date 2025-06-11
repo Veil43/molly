@@ -66,8 +66,8 @@ void Camera::process_movement_input(eMovement direction, f32 delta_time) {
 }
 
 void Camera::process_mouse_movement_input(f32 xoffset, f32 yoffset, f32 delta_time) {
-    xoffset *= kDefaultMouseSensitivity * delta_time;
-    yoffset *= kDefaultMouseSensitivity * delta_time;
+    xoffset *= m_mouse_sensitivity * delta_time;
+    yoffset *= m_mouse_sensitivity * delta_time;
 
     this->m_yaw += xoffset;
     this->m_pitch += yoffset;
