@@ -39,7 +39,6 @@ glm::mat4 Camera::get_projection_matrix() const {
     return glm::perspective(glm::radians(this->m_vfov), this->m_aspect_ratio, this->m_near, this->m_far);
 }
 
-
 void Camera::process_movement_input(eMovement direction, f32 delta_time) {
     switch (direction) {
         case eMovement::kForward : {

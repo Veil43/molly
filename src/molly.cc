@@ -122,8 +122,10 @@ void molly_render_loop(Input input) {
     // give the point light a body
     auto& cube_model = main_scene.handle.models.back();
     cube_model.meshes[0].transform.translation = main_scene.light1.position;
-    cube_model.meshes[0].transform.scale = glm::vec3(2.0/main_scene.transform.scale.x);
+    cube_model.meshes[0].transform.scale = glm::vec3(0.2/main_scene.transform.scale.x);
 
+    f32 aspect_ratio = platform_get_screen_aspect_ratio();
+    main_scene.camera.m_aspect_ratio = aspect_ratio;
     draw_molly_scene(main_scene);
 
     // -------------------------- Timing Information --------------------------
@@ -181,7 +183,7 @@ static void imgui_debug_pannel() {
 
     if (ImGui::CollapsingHeader("Objects")) {
         ImGui::Text("Point Light:");
-        ImGui::DragFloat3("##Position", &main_scene.light1.position.x, 10.0f);
+        ImGui::DragFloat3("##Position", &main_scene.light1.position.x, 1.0f);
         ImGui::Text("Scene Scale");
         ImGui::DragFloat3("##Scale", &main_scene.transform.scale.x, 0.1f);
     }
@@ -189,6 +191,8 @@ static void imgui_debug_pannel() {
     if (ImGui::CollapsingHeader("Camera Config")) {
         ImGui::Text("Far");
         ImGui::DragFloat("##Far", &main_scene.camera.m_far, 1.0f);
+        ImGui::Text("Mouse Sensitivity");
+        ImGui::DragFloat("##MouseSensitivity", &main_scene.camera.m_movement_speed, 1.0f);
     }
 
     ImGui::End();

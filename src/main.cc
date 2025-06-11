@@ -213,6 +213,12 @@ void platform_request_quit() {
     glfwSetWindowShouldClose(sg_window_handle, GLFW_TRUE);   
 }
 
+f32 platform_get_screen_aspect_ratio() {
+    i32 width, height;
+    glfwGetFramebufferSize(sg_window_handle, &width, &height);
+    return f32(width)/f32(height);
+}
+
 // --------------------------------------------------------------------------------
 //
 // --------------------------------------------------------------------------------
