@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <string>
 #include <vector>
-#include <map>
 
 #include "molly_math.h"
 
@@ -40,6 +39,7 @@ struct MeshData {
     Transform transform;
     std::vector<unsigned char> pos_data;
     std::vector<unsigned char> nor_data;
+    std::vector<unsigned char> tan_data;
     std::vector<unsigned char> tex_data_0;
     std::vector<unsigned char> indices_data;
     int material_index;

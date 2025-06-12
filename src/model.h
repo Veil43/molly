@@ -6,9 +6,11 @@
 #include "gltf_loader.h"
 #include "camera.h"
 
-static const u32 kPositionIndex = 0;
-static const u32 kNormalIndex = 1;
-static const u32 kTexCoordIndex = 2;
+static constexpr u32 kAttributeCount = 4;
+static constexpr u32 kPositionIndex = 0;
+static constexpr u32 kNormalIndex = 1;
+static constexpr u32 kTangentIndex = 2;
+static constexpr u32 kTexCoordIndex = 3;
 
 struct Vertex {
     glm::vec3 position;
@@ -21,7 +23,7 @@ struct Vertex {
 // -----------------------------------------
 struct MeshHandle {
     Transform transform;
-    u32 vbo[3];
+    u32 vbo[kAttributeCount];
     u32 vao;
     u32 ebo;
     u32 indices_type;

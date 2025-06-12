@@ -2,6 +2,7 @@
 out vec4 FragColor;
 
 in vec3 normal;
+
 in vec3 surface_point;
 in vec2 tex_coord;
 
@@ -18,12 +19,6 @@ uniform vec3 camera_position;
 #define MAX_SHININESS (32.0)
 
 void main() {
-    vec3 nor = vec3(texture(normal_map, tex_coord));
-    if (nor == vec3(0.0)) {
-        nor = normal;
-    }
-    nor = normalize(nor);
-
     vec3 light_dir = normalize(point_light1_position - surface_point);
     vec3 cam_dir = normalize(camera_position - surface_point);
     vec3 reflected_dir = (reflect(-point_light1_position, normal));
@@ -40,8 +35,6 @@ void main() {
     vec3 color = vec3(texture(diffuse_map, tex_coord)) * diff * vec3(diffuse_factor);
     color += vec3(texture(diffuse_map, tex_coord)) * amb;
     color += vec3(1.0) * spec;
-
-    // color = vec3(metalness);
 
     FragColor = vec4(color, 1.0);
 }

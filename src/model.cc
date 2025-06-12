@@ -49,7 +49,7 @@ MeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
 
     GL_QUERY_ERROR(glGenVertexArrays(1, &output_mesh.vao);)
     GL_QUERY_ERROR(glBindVertexArray(output_mesh.vao);)
-    GL_QUERY_ERROR(glGenBuffers(3, output_mesh.vbo);)
+    GL_QUERY_ERROR(glGenBuffers(kAttributeCount, output_mesh.vbo);)
     // --------------- Position Loading -----------------------
     GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, output_mesh.vbo[kPositionIndex]);)
     GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.pos_data.size(), mesh.pos_data.data(), GL_STATIC_DRAW);)
@@ -60,6 +60,11 @@ MeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave) {
     GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.nor_data.size(), mesh.nor_data.data(), GL_STATIC_DRAW);)
     GL_QUERY_ERROR(glVertexAttribPointer(kNormalIndex, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);)
     GL_QUERY_ERROR(glEnableVertexAttribArray(kNormalIndex);)
+    // --------------- Tangent Loading ------------------------
+    GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, output_mesh.vbo[kTangentIndex]);)
+    GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.tan_data.size(), mesh.tan_data.data(), GL_STATIC_DRAW);)
+    GL_QUERY_ERROR(glVertexAttribPointer(kTangentIndex, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);)
+    GL_QUERY_ERROR(glEnableVertexAttribArray(kTangentIndex);)
     // -------------- Texture Coord Loading -------------------
     GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, output_mesh.vbo[kTexCoordIndex]);)
     GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, mesh.tex_data_0.size(), mesh.tex_data_0.data(), GL_STATIC_DRAW);)

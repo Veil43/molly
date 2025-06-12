@@ -7,11 +7,10 @@ using Root = Model;
 
 #include <cstdio>
 #include <cassert>
+#include <map>
 
 #include "logger.h"
 #include "molly_math.h"
-
-namespace fs = std::filesystem;
 
 static std::map<int, gltf::MaterialInfo> 
 g_material_cache;
@@ -160,13 +159,16 @@ load_primitive_meshes(const Root& root, int mesh_id) {
             int nor_accessor_index = primitive.attributes.at("NORMAL");
             curr_mesh.nor_data = get_buffer_data_from_accessor(root, nor_accessor_index);
         }
+        if (primitive_contains_attributes(primitive, "TANGENT")) {
+            int tangent_accessor_index = primitive.attributes.at("TANGENT");
+            curr_mesh.tan_data = get_buffer_data_from_accessor(root, tangent_accessor_index);
+        }
         if (primitive_contains_attributes(primitive, "TEXCOORD_0")) {
             int tex_accessor_index_0 = primitive.attributes.at("TEXCOORD_0");
             curr_mesh.tex_data_0 = get_buffer_data_from_accessor(root, tex_accessor_index_0);
             curr_mesh.texture_type_0 = get_accessor_component_type(root, tex_accessor_index_0);
         }
-        /// TODO: add full support for tangent and other texture coordinates
-        // int tan_accessor_index = primitive.attributes.at("TANGENT");
+        /// TODO: add full support for other texture coordinates
         // int tex_accessor_index_1 = primitive.attributes.at("TEXCOORD_");
         
         if (primitive.indices >= 0) {
