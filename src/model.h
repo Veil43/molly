@@ -44,6 +44,9 @@ struct MaterialHandle {
     TextureHandle metallic_roughness;
     TextureHandle normal;
     std::string shader_name = "mr_phong";
+    glm::vec4 diffuse_factor;
+    f32 metallic_factor;
+    f32 roughness_factor;
 };
 
 struct SceneHandle {

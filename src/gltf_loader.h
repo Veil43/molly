@@ -29,10 +29,10 @@ struct MaterialInfo {
     TextureInfo diffuse_map;
     TextureInfo metallic_roughness_map;
     TextureInfo normal_map;
-    glm::vec4 diffuse_factor;
-    float metallic_factor;
-    float roughness_factor;
-    float normal_scale;
+    glm::vec4 diffuse_factor = glm::vec4(1.0f);
+    float metallic_factor = 1.0f;
+    float roughness_factor = 1.0f;
+    float normal_scale = 1.0f;
 };
 
 struct MeshData {

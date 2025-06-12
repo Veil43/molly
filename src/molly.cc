@@ -79,7 +79,7 @@ void molly_on_startup_call(f32 aspect_ratio) {
 
     main_scene.transform.scale = glm::vec3(1.0f);
     main_scene.camera.m_movement_speed = 10.0f;
-    main_scene.camera.m_position = glm::vec3(0.0f,0.0f,0.0f);
+    main_scene.camera.m_position = glm::vec3(-8.0f,1.5f,-0.4f);
     main_scene.camera.m_far = 1000.0f;
 }
 
@@ -88,6 +88,7 @@ void molly_render_loop(Input input) {
     delta_time = platform_measure_time_elapsed(false);
 
     GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
+    GL_QUERY_ERROR(glClearStencil(0);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
 
     if (key_press(input.w_key) || key_hold(input.w_key)) {
@@ -132,11 +133,12 @@ void molly_render_loop(Input input) {
     // -------------------------- Timing Information --------------------------
 #ifdef MOLLY_DEBUG
     static u32 frame_count = 0;
-    static f64 time_accumilator = 0.0;
+    static f64 time_accumilator = 0.05;
     static u32 old_fps = 0;
     u32 fps = old_fps;
 
     time_accumilator += delta_time;
+
     frame_count += 1;
     if (time_accumilator >= 1.0) {
         fps = static_cast<u32>(frame_count / time_accumilator);

@@ -135,6 +135,10 @@ MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
     output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map, material.name + " diffuse");
     output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map, material.name + " metallic_roughness");
     output_material.normal = load_gltf_texture_to_opengl(material.normal_map, material.name + " normal");
+    
+    output_material.diffuse_factor = material.diffuse_factor;
+    output_material.metallic_factor = material.metallic_factor;
+    output_material.roughness_factor = material.roughness_factor;
 
     return output_material;
 }
@@ -182,16 +186,21 @@ void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera&
         shader.set_mat4f("projection", camera.get_projection_matrix());
 
         shader.set_vec3f("point_light1_position", light1_position);
+        shader.set_vec3f("camera_position", camera.m_position);
 
         shader.set_int("diffuse_map", material.diffuse.texture_unit);
         shader.set_int("metallic_roughness_map", material.metallic_roughness.texture_unit);
         shader.set_int("normal_map", material.normal.texture_unit);
 
+        shader.set_vec4f("diffuse_factor", material.diffuse_factor);
+        shader.set_float("metallic_factor", material.metallic_factor);
+        shader.set_float("roughness_factor", material.roughness_factor);
+
         GL_QUERY_ERROR(glBindVertexArray(mesh.vao);)
         if (mesh.icount > 0) {
             GL_QUERY_ERROR(glDrawElements(GL_TRIANGLES, mesh.icount, mesh.indices_type, 0);)
         } else {
-            glDrawArrays(GL_TRIANGLES, 0, mesh.vcount);
+            GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, mesh.vcount);)
         }
         GL_QUERY_ERROR(glBindVertexArray(0);)
         shader.unbind();    
