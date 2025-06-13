@@ -113,6 +113,7 @@ static State global_state = {};
 static Framebuffer g_framebuffer = {};
 static u32 quad_vao = 0;
 static u32 quad_vbo = 0;
+static Shader framebuffer_shader = {};
 
 void molly_on_startup_call(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
@@ -151,6 +152,7 @@ void molly_on_startup_call(f32 aspect_ratio) {
     main_scene.camera.m_position = glm::vec3(-8.0f,1.5f,-0.4f);
     main_scene.camera.m_far = 1000.0f;
 
+    // -------------------------------------------------
     i32 width, height;
     f32 ar;
     platform_get_screen_dimensions(width, height, ar);
@@ -178,6 +180,8 @@ void molly_on_startup_call(f32 aspect_ratio) {
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    framebuffer_shader = Shader(utils::resolve_path("src/shaders/vframebuffer.glsl"),
+                utils::resolve_path("src/shaders/fframebuffer.glsl"));
 }
 
 void molly_render_loop(Input input) {
@@ -213,25 +217,36 @@ void molly_render_loop(Input input) {
         main_scene.camera.process_mouse_movement_input(input.mouse_x - input.mouse_prevx, input.mouse_prevy - input.mouse_y, delta_time);
     }
 
-    // DRAW!!!!
-    // g_framebuffer.bind(); // Draw to the offscreen buffer
+    // ------------------------ Draw to offscreen buffer ------------------------
+    g_framebuffer.bind(); // Draw to the offscreen buffer
     glEnable(GL_DEPTH_TEST);
     GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
     GL_QUERY_ERROR(glClearStencil(0);)
     GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
-
+    
     // give the point light a body
     auto& cube_model = main_scene.handle.models.back();
     cube_model.meshes[0].transform.translation = main_scene.light1.position;
     cube_model.meshes[0].transform.scale = glm::vec3(0.2/main_scene.transform.scale.x);
-
+    
     f32 aspect_ratio = platform_get_screen_aspect_ratio();
     main_scene.camera.m_aspect_ratio = aspect_ratio;
-
-    draw_molly_scene(main_scene);
-    // g_framebuffer.unbind();
-
     
+    draw_molly_scene(main_scene);
+    g_framebuffer.unbind();
+    
+    // --------------------- Draw offscreen buffer to screen --------------------
+    GL_QUERY_ERROR(glDisable(GL_DEPTH_TEST);)
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + kOtherTexUnit);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, g_framebuffer.m_texture_color_buffer);)
+    framebuffer_shader.bind();
+    GL_QUERY_ERROR(glBindVertexArray(quad_vao);)
+    framebuffer_shader.set_int("screen_texture", kOtherTexUnit);
+    GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, 6);)
+    framebuffer_shader.unbind();
 
     // -------------------------- Timing Information --------------------------
 #ifdef MOLLY_DEBUG

@@ -8,9 +8,6 @@
 #include "logger.h"
 #include "shader.h"
 
-/// TODO: please figure out a more robust way to handle texture counts than this.
-static int g_texture_counter = 0;
-
 // -----------------------------------------------------------
 // Model loading
 // -----------------------------------------------------------
@@ -123,7 +120,6 @@ TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture, const std:
     }
 
     GL_QUERY_ERROR(glGenTextures(1, &output_handle.texture);)
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + g_texture_counter);)
     GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, output_handle.texture);)
     
     GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image.width, image.height, 0, format, GL_UNSIGNED_BYTE, image.data);)
@@ -134,8 +130,6 @@ TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture, const std:
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);)
 
-    output_handle.texture_unit = g_texture_counter;
-    g_texture_counter++;
     return output_handle;
 }
 
@@ -198,10 +192,15 @@ void draw_gltf_model(const ModelHandle& model, const SceneHandle& scene, Camera&
 
         shader.set_vec3f("point_light1_position", light1_position);
         shader.set_vec3f("camera_position", camera.m_position);
+        
+        bind_texture_to_unit(material.diffuse.texture, kDiffuseTexUnit);
+        bind_texture_to_unit(material.metallic_roughness.texture, kMetallicRoughnessTexUnit);
+        bind_texture_to_unit(material.normal.texture, kNormalIndex);
 
-        shader.set_int("diffuse_map", material.diffuse.texture_unit);
-        shader.set_int("metallic_roughness_map", material.metallic_roughness.texture_unit);
-        shader.set_int("normal_map", material.normal.texture_unit);
+
+        shader.set_int("diffuse_map", kDiffuseTexUnit);
+        shader.set_int("metallic_roughness_map", kMetallicRoughnessTexUnit);
+        shader.set_int("normal_map", kNormalTexUnit);
 
         shader.set_vec4f("diffuse_factor", material.diffuse_factor);
         shader.set_float("metallic_factor", material.metallic_factor);

@@ -12,6 +12,12 @@ static constexpr u32 kNormalIndex = 1;
 static constexpr u32 kTangentIndex = 2;
 static constexpr u32 kTexCoordIndex = 3;
 
+static constexpr u32 kDiffuseTexUnit = 0;
+static constexpr u32 kMetallicRoughnessTexUnit = 1;
+static constexpr u32 kNormalTexUnit = 2;
+
+static constexpr u32 kOtherTexUnit = 3;
+
 struct Vertex {
     glm::vec3 position;
     glm::vec3 normal;
@@ -37,7 +43,6 @@ struct ModelHandle {
 };
 
 struct TextureHandle {
-    u32 texture_unit;
     u32 texture;
 };
 
@@ -60,6 +65,10 @@ MeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave = fals
 ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave);
 MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material, const std::string& shader_name = "mr_phong");
 SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& scene, bool interleave);
+
+u32 get_texture_counter();
+void increment_texture_counter();
+void reset_texture_counter();
 
 // void draw_gltf_model(const ModelHandle& m, const SceneHandle& scene);
 // void draw_gltf_scene(const SceneHandle& scene, Camera& camera);
