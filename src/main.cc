@@ -103,6 +103,7 @@ int main() {
         glfwSwapBuffers(window_handle);
     }
 
+    molly_on_shutdown_call();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -217,6 +218,14 @@ f32 platform_get_screen_aspect_ratio() {
     i32 width, height;
     glfwGetFramebufferSize(sg_window_handle, &width, &height);
     return f32(width)/f32(height);
+}
+
+void platform_get_screen_dimensions(i32& width, i32& height, f32& aspect_ratio) {
+    i32 x, y;
+    glfwGetFramebufferSize(sg_window_handle, &x, &y);
+    width = x;
+    height = y;
+    aspect_ratio = f32(width)/f32(height);
 }
 
 // --------------------------------------------------------------------------------

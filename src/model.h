@@ -58,7 +58,7 @@ struct SceneHandle {
 
 MeshHandle load_gltf_mesh_to_opengl(gltf::MeshData& mesh, bool interleave = false);
 ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave);
-MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material);
+MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material, const std::string& shader_name = "mr_phong");
 SceneHandle load_gltf_scene_to_opengl(gltf::SceneData& scene, bool interleave);
 
 // void draw_gltf_model(const ModelHandle& m, const SceneHandle& scene);

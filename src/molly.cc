@@ -15,6 +15,13 @@
 #include "gltf_loader.h"
 #include "input.h"
 
+#define GL_BOUND_FBO()                                          \
+    {                                                           \
+        int bound;                                              \
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &bound);          \
+        utils::cmdlog("Bound FBO: " + std::to_string(bound));   \
+    }
+
 class State {
     u64 bitmap;
 public:
@@ -39,6 +46,62 @@ public:
     }
 };
 
+class Framebuffer {
+public:
+    u32 m_fbo = 0;
+    u32 m_texture_color_buffer = 0;
+    u32 m_depth_stencil_rbo = 0;
+
+    Framebuffer() {}
+    Framebuffer(i32 screen_width, i32 screen_height) {
+        GL_QUERY_ERROR(glGenFramebuffers(1, &m_fbo);)
+        GL_QUERY_ERROR(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);)
+        // we can have GL_READ_FRAMEBUFFER or GL_DRAW_FRAMEBUFFER also
+        // for color attachment
+        GL_QUERY_ERROR(glGenTextures(1, &m_texture_color_buffer);)
+        GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, m_texture_color_buffer);)
+        GL_QUERY_ERROR(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, screen_width, screen_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);)
+        GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);)
+        GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);)
+        GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, 0);)
+        
+        // for depth and stencil attachment
+        // These are readonly
+        GL_QUERY_ERROR(glGenRenderbuffers(1, &m_depth_stencil_rbo);) 
+        GL_QUERY_ERROR(glBindRenderbuffer(GL_RENDERBUFFER, m_depth_stencil_rbo);)
+        GL_QUERY_ERROR(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, screen_width, screen_height);)
+        GL_QUERY_ERROR(glBindRenderbuffer(GL_RENDERBUFFER, 0);)
+        
+        // attach the attachments
+        GL_QUERY_ERROR(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture_color_buffer, 0);)
+        GL_QUERY_ERROR(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depth_stencil_rbo);)
+
+        GL_QUERY_ERROR(u32 status  = glCheckFramebufferStatus(GL_FRAMEBUFFER);)
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            logger::log_debug("framebuffer [" + std::to_string(m_fbo) + "] is not complete", logger::eLoggingLevel::kError, 20.0f);
+        }
+        unbind();
+    }
+
+    void destroy() {
+        unbind();
+        GL_QUERY_ERROR(glDeleteTextures(1, &m_texture_color_buffer);)
+        GL_QUERY_ERROR(glDeleteRenderbuffers(1, &m_depth_stencil_rbo);)
+        GL_QUERY_ERROR(glDeleteFramebuffers(1, &m_fbo);)
+    }
+
+    void bind() {
+        GL_QUERY_ERROR(glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);)
+    }
+    void unbind() {
+        GL_QUERY_ERROR(glBindFramebuffer(GL_FRAMEBUFFER, 0);)
+    }
+};
+
+void draw_quad() {
+
+}
+
 static bool key_press(InputKey& k);
 static bool key_hold(InputKey& k);
 static bool key_release(InputKey& k);
@@ -47,12 +110,17 @@ static void imgui_debug_pannel(); /// TODO: add a debug pannel that allows us to
 static Scene main_scene = {};
 static Scene scene2;
 static State global_state = {};
+static Framebuffer g_framebuffer = {};
+static u32 quad_vao = 0;
+static u32 quad_vbo = 0;
 
 void molly_on_startup_call(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
     GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
     GL_QUERY_ERROR(glDepthFunc(GL_LESS);)
     // GL_QUERY_ERROR(glEnable(GL_STENCIL_TEST);)
+    GL_QUERY_ERROR(glEnable(GL_BLEND);)
+    GL_QUERY_ERROR(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);)
     // -- Platform Configurations --
     platform_disable_mouse_cursor();
 
@@ -63,15 +131,16 @@ void molly_on_startup_call(f32 aspect_ratio) {
 
     register_shader_with_name("mr_phong", mr_phong_shader);
     register_shader_with_name("plain_white", plain_white_shader);
-
-    gltf_scene_data.materials.push_back(cube::material);
-    gltf::ModelData cube_model = cube::get_cube_model(gltf_scene_data.materials.size()-1);
+    
+    gltf::ModelData cube_model = cube::get_cube_model(gltf_scene_data.materials.size());
     gltf_scene_data.models.push_back(cube_model);
-    
     main_scene.handle = load_gltf_scene_to_opengl(gltf_scene_data, false);
-    /// NOTE: This is hacky but brother when you gotta go you gotta go
-    main_scene.handle.materials.back().shader_name = "plain_white";
     
+    // load cube material
+    gltf::MaterialInfo cube_material_data = cube::material;
+    MaterialHandle cube_material = load_gltf_material_to_opengl(cube_material_data, "plain_white");
+    main_scene.handle.materials.push_back(cube_material);
+
     main_scene.camera = Camera(glm::vec3(0.0, 0.0, 0.0));
     
     main_scene.light1.type = Light::eLightType::kPoint;
@@ -81,15 +150,39 @@ void molly_on_startup_call(f32 aspect_ratio) {
     main_scene.camera.m_movement_speed = 10.0f;
     main_scene.camera.m_position = glm::vec3(-8.0f,1.5f,-0.4f);
     main_scene.camera.m_far = 1000.0f;
+
+    i32 width, height;
+    f32 ar;
+    platform_get_screen_dimensions(width, height, ar);
+    g_framebuffer = Framebuffer(width, height);
+
+    f32 quad_vertices[] = {
+         1.0f, -1.0f,    1.0f, 0.0f,
+        -1.0f, -1.0f,   0.0f, 0.0f,
+        -1.0f,  1.0f,    0.0f, 1.0f,
+        
+         1.0f,  1.0f,     1.0f, 1.0f,
+         1.0f, -1.0f,    1.0f, 0.0f,
+        -1.0f,  1.0f,    0.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &quad_vao);
+    glBindVertexArray(quad_vao);
+    
+    glGenBuffers(1, &quad_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2*sizeof(f32)));
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void molly_render_loop(Input input) {
     static f64 delta_time = 0.0;
     delta_time = platform_measure_time_elapsed(false);
-
-    GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
-    GL_QUERY_ERROR(glClearStencil(0);)
-    GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
 
     if (key_press(input.w_key) || key_hold(input.w_key)) {
         main_scene.camera.process_movement_input(eMovement::kForward, delta_time);
@@ -121,6 +214,12 @@ void molly_render_loop(Input input) {
     }
 
     // DRAW!!!!
+    // g_framebuffer.bind(); // Draw to the offscreen buffer
+    glEnable(GL_DEPTH_TEST);
+    GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
+    GL_QUERY_ERROR(glClearStencil(0);)
+    GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
+
     // give the point light a body
     auto& cube_model = main_scene.handle.models.back();
     cube_model.meshes[0].transform.translation = main_scene.light1.position;
@@ -128,7 +227,11 @@ void molly_render_loop(Input input) {
 
     f32 aspect_ratio = platform_get_screen_aspect_ratio();
     main_scene.camera.m_aspect_ratio = aspect_ratio;
+
     draw_molly_scene(main_scene);
+    // g_framebuffer.unbind();
+
+    
 
     // -------------------------- Timing Information --------------------------
 #ifdef MOLLY_DEBUG
@@ -160,6 +263,10 @@ void molly_render_loop(Input input) {
     if (global_state.app_should_close()) {
         platform_request_quit();
     }
+}
+
+void molly_on_shutdown_call() {
+    g_framebuffer.destroy();
 }
 
 void molly_mouse_scroll(f32 yoffset) {

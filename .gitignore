@@ -10,3 +10,4 @@ out
 tests
 .github
 imgui.ini
+.DS_Store

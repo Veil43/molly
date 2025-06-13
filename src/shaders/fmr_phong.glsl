@@ -32,9 +32,14 @@ void main() {
     float diff = max(dot(light_dir, normal), 0.0);
     float spec = metalness * pow(max(dot(reflected_dir, cam_dir), 0.0), shininess);
 
-    vec3 color = vec3(texture(diffuse_map, tex_coord)) * diff * vec3(diffuse_factor);
+    vec4 diffuse_color = texture(diffuse_map, tex_coord);
+    if (diffuse_color.a < 0.1) {
+        discard;
+    }
+    
+    vec3 color =  diffuse_color.rgb * diff * vec3(diffuse_factor);
     color += vec3(texture(diffuse_map, tex_coord)) * amb;
-    color += vec3(1.0) * spec;
+    // color += vec3(1.0) * spec;
 
-    FragColor = vec4(color, 1.0);
+    FragColor = vec4(color, diffuse_color.a);
 }

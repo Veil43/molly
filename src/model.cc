@@ -94,6 +94,11 @@ ModelHandle load_gltf_model_to_opengl(gltf::ModelData& model, bool interleave) {
 // ---------------------------------------------------------------------
 // Material Loading
 // ---------------------------------------------------------------------
+void bind_texture_to_unit(u32 texture, u32 unit) {
+    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + unit);)
+    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, texture);)
+}
+
 TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture, const std::string& name = "none") {
     TextureHandle output_handle = {};
 
@@ -126,21 +131,22 @@ TextureHandle load_gltf_texture_to_opengl(gltf::TextureInfo& texture, const std:
 
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);)
     GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);)
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);)
-    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);)
+    GL_QUERY_ERROR(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);)
 
     output_handle.texture_unit = g_texture_counter;
     g_texture_counter++;
     return output_handle;
 }
 
-MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material) {
+MaterialHandle load_gltf_material_to_opengl(gltf::MaterialInfo& material, const std::string& shader_name) {
     MaterialHandle output_material = {};
     
     output_material.diffuse = load_gltf_texture_to_opengl(material.diffuse_map, material.name + " diffuse");
     output_material.metallic_roughness = load_gltf_texture_to_opengl(material.metallic_roughness_map, material.name + " metallic_roughness");
     output_material.normal = load_gltf_texture_to_opengl(material.normal_map, material.name + " normal");
-    
+    output_material.shader_name = shader_name;
+
     output_material.diffuse_factor = material.diffuse_factor;
     output_material.metallic_factor = material.metallic_factor;
     output_material.roughness_factor = material.roughness_factor;
