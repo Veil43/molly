@@ -114,6 +114,7 @@ static Framebuffer g_framebuffer = {};
 static u32 quad_vao = 0;
 static u32 quad_vbo = 0;
 static Shader framebuffer_shader = {};
+static bool render_frame_buffer = false;
 
 void molly_on_startup_call(f32 aspect_ratio) {
     // --- OpenGL Configurations ---
@@ -168,18 +169,18 @@ void molly_on_startup_call(f32 aspect_ratio) {
         -1.0f,  1.0f,    0.0f, 1.0f
     };
 
-    glGenVertexArrays(1, &quad_vao);
-    glBindVertexArray(quad_vao);
+    GL_QUERY_ERROR(glGenVertexArrays(1, &quad_vao);)
+    GL_QUERY_ERROR(glBindVertexArray(quad_vao);)
     
-    glGenBuffers(1, &quad_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2*sizeof(f32)));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    GL_QUERY_ERROR(glGenBuffers(1, &quad_vbo);)
+    GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);)
+    GL_QUERY_ERROR(glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);)
+    GL_QUERY_ERROR(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)0);)
+    GL_QUERY_ERROR(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(f32), (void*)(2*sizeof(f32)));)
+    GL_QUERY_ERROR(glEnableVertexAttribArray(0);)
+    GL_QUERY_ERROR(glEnableVertexAttribArray(1);)
+    GL_QUERY_ERROR(glBindVertexArray(0);)
+    GL_QUERY_ERROR(glBindBuffer(GL_ARRAY_BUFFER, 0);)
     framebuffer_shader = Shader(utils::resolve_path("src/shaders/vframebuffer.glsl"),
                 utils::resolve_path("src/shaders/fframebuffer.glsl"));
 }
@@ -218,35 +219,55 @@ void molly_render_loop(Input input) {
     }
 
     // ------------------------ Draw to offscreen buffer ------------------------
-    g_framebuffer.bind(); // Draw to the offscreen buffer
-    glEnable(GL_DEPTH_TEST);
-    GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
-    GL_QUERY_ERROR(glClearStencil(0);)
-    GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
-    
-    // give the point light a body
-    auto& cube_model = main_scene.handle.models.back();
-    cube_model.meshes[0].transform.translation = main_scene.light1.position;
-    cube_model.meshes[0].transform.scale = glm::vec3(0.2/main_scene.transform.scale.x);
-    
-    f32 aspect_ratio = platform_get_screen_aspect_ratio();
-    main_scene.camera.m_aspect_ratio = aspect_ratio;
-    
-    draw_molly_scene(main_scene);
-    g_framebuffer.unbind();
-    
-    // --------------------- Draw offscreen buffer to screen --------------------
-    GL_QUERY_ERROR(glDisable(GL_DEPTH_TEST);)
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    if (render_frame_buffer) {
 
-    GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + kOtherTexUnit);)
-    GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, g_framebuffer.m_texture_color_buffer);)
-    framebuffer_shader.bind();
-    GL_QUERY_ERROR(glBindVertexArray(quad_vao);)
-    framebuffer_shader.set_int("screen_texture", kOtherTexUnit);
-    GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, 6);)
-    framebuffer_shader.unbind();
+        g_framebuffer.bind(); // Draw to the offscreen buffer
+        GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
+        GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
+        GL_QUERY_ERROR(glClearStencil(0);)
+        GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
+        
+        // give the point light a body
+        auto& cube_model = main_scene.handle.models.back();
+        cube_model.meshes[0].transform.translation = main_scene.light1.position;
+        cube_model.meshes[0].transform.scale = glm::vec3(0.2/main_scene.transform.scale.x);
+        
+        f32 aspect_ratio = platform_get_screen_aspect_ratio();
+        main_scene.camera.m_aspect_ratio = aspect_ratio;
+        
+        draw_molly_scene(main_scene);
+        g_framebuffer.unbind();
+        
+        // --------------------- Draw offscreen buffer to screen --------------------
+        GL_QUERY_ERROR(glDisable(GL_DEPTH_TEST);)
+        GL_QUERY_ERROR(glClearColor(1.0f, 1.0f, 1.0f, 1.0f);)
+        GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT);)
+        
+        GL_QUERY_ERROR(glActiveTexture(GL_TEXTURE0 + kOtherTexUnit);)
+        GL_QUERY_ERROR(glBindTexture(GL_TEXTURE_2D, g_framebuffer.m_texture_color_buffer);)
+        framebuffer_shader.bind();
+        GL_QUERY_ERROR(glBindVertexArray(quad_vao);)
+        framebuffer_shader.set_int("screen_texture", kOtherTexUnit);
+        GL_QUERY_ERROR(glDrawArrays(GL_TRIANGLES, 0, 6);)
+        framebuffer_shader.unbind();
+
+    } else {
+        g_framebuffer.unbind();
+        GL_QUERY_ERROR(glEnable(GL_DEPTH_TEST);)
+        GL_QUERY_ERROR(glClearColor(0.01f, 0.01f, 0.01f, 1.0f);)
+        GL_QUERY_ERROR(glClearStencil(0);)
+        GL_QUERY_ERROR(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);)
+
+        // give the point light a body
+        auto& cube_model = main_scene.handle.models.back();
+        cube_model.meshes[0].transform.translation = main_scene.light1.position;
+        cube_model.meshes[0].transform.scale = glm::vec3(0.2/main_scene.transform.scale.x);
+        
+        f32 aspect_ratio = platform_get_screen_aspect_ratio();
+        main_scene.camera.m_aspect_ratio = aspect_ratio;
+        
+        draw_molly_scene(main_scene);
+    }
 
     // -------------------------- Timing Information --------------------------
 #ifdef MOLLY_DEBUG
@@ -320,6 +341,10 @@ static void imgui_debug_pannel() {
         ImGui::DragFloat("##MouseSensitivity", &main_scene.camera.m_mouse_sensitivity, 1.0f);
         ImGui::Text("Movement Speed");
         ImGui::DragFloat("##MovementSpeed", &main_scene.camera.m_movement_speed, 1.0f);
+    }
+
+    if (ImGui::Checkbox("Black & White Post-Process", &render_frame_buffer)) {
+        // 
     }
 
     ImGui::End();

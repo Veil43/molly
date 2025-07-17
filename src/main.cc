@@ -10,7 +10,7 @@
 #include "molly_services.h"
 #include "input.h"
 
-#define WINDOW_WIDTH 1200.0
+#define WINDOW_WIDTH 1700.0
 #define WINDOW_ASPECT_RATIO (16.0f / 9.0f)
 #define WINDOW_TITLE "OpenGL with Molly"
 

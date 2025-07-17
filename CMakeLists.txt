@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.20)
 project(molly)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE_DEBUG ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # symbols
 option (INCLUDE_GRAPHICS "Build with the grpahics portion" ON)
