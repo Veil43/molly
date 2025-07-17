@@ -1,7 +1,6 @@
 .vs
 .vscode
 build
-assets
 .cache
 cache
 cmake-build-debug-visual-studio
